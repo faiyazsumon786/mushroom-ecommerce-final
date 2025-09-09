@@ -1,14 +1,15 @@
 import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { authOptions } from '../../auth/[...nextauth]/route';
 
 const prisma = new PrismaClient();
 
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { paymentId: string } }
 ) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -23,7 +24,6 @@ export async function PATCH(
     });
     return NextResponse.json(updatedPayment);
   } catch (error) {
-    console.error('Failed to update payment status:', error);
     return NextResponse.json({ error: 'Failed to update payment status' }, { status: 500 });
   }
 }

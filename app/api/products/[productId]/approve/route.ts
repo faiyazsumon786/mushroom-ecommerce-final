@@ -1,21 +1,15 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ProductStatus } from '@prisma/client';
 import { getServerSession } from 'next-auth';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { authOptions } from '../../../auth/[...nextauth]/route';
 
 const prisma = new PrismaClient();
 
-enum ProductStatus {
-  DRAFT = "DRAFT",
-  PENDING_APPROVAL = "PENDING_APPROVAL",
-  LIVE = "LIVE",
-  REJECTED = "REJECTED",
-}
-
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { productId: string } }
 ) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   if (session?.user?.role !== 'ADMIN') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
@@ -26,11 +20,7 @@ export async function PATCH(
       data: { status: ProductStatus.LIVE },
     });
     return NextResponse.json(updatedProduct);
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error('Failed to approve product:', error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+  } catch (error) {
     return NextResponse.json({ error: 'Failed to approve product' }, { status: 500 });
   }
 }

@@ -1,48 +1,46 @@
-// src/app/api/products/[productId]/route.ts
 import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 
 const prisma = new PrismaClient();
 
-// Configure Cloudinary globally
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ✅ Update Product (PUT)
+async function uploadToCloudinary(buffer: Buffer): Promise<UploadApiResponse> {
+  return new Promise((resolve, reject) => {
+    const upload = cloudinary.uploader.upload_stream(
+      { resource_type: 'image' },
+      (error, result) => {
+        if (error || !result) reject(error);
+        else resolve(result);
+      }
+    );
+    upload.end(buffer);
+  });
+}
+
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { productId: string } }
 ) {
-  const id = params.productId;
   try {
     const formData = await request.formData();
     const imageFile = formData.get('image') as File | null;
     let imageUrl: string | undefined;
 
-    // Check if a new image is uploaded
     if (imageFile && imageFile.size > 0) {
       const bytes = await imageFile.arrayBuffer();
       const buffer = Buffer.from(bytes);
-
-      const uploadResult: UploadApiResponse = await new Promise((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream({ resource_type: 'image' }, (error, result) => {
-            if (error) return reject(error);
-            if (!result) return reject(new Error('Cloudinary upload failed'));
-            resolve(result);
-          })
-          .end(buffer);
-      });
-
+      const uploadResult = await uploadToCloudinary(buffer);
       imageUrl = uploadResult.secure_url;
     }
 
     const updatedProduct = await prisma.product.update({
-      where: { id },
+      where: { id: params.productId },
       data: {
         name: formData.get('name') as string,
         description: formData.get('description') as string,
@@ -56,25 +54,29 @@ export async function PUT(
     });
 
     return NextResponse.json(updatedProduct);
-  } catch (error) {
-    console.error('Update Error:', error);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Update Error:', error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
 }
 
-// ✅ Delete Product (DELETE)
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { productId: string } }
 ) {
-  const id = params.productId;
   try {
     await prisma.product.delete({
-      where: { id },
+      where: { id: params.productId },
     });
     return NextResponse.json({ message: 'Product deleted successfully' });
-  } catch (error) {
-    console.error('Delete Error:', error);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Delete Error:', error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
 }
