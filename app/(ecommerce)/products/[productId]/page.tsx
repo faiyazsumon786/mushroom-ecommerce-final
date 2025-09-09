@@ -27,7 +27,7 @@ interface ProductDetailPageProps {
   params: { productId: string };
 }
 
-export default async function ProductDetailPage({ params }: { params: { productId: string } }) {
+export default async function ProductDetailPage({ params }: any) {
   const product = await getProduct(params.productId);
   const session = await getServerSession();
 

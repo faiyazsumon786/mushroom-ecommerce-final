@@ -24,7 +24,7 @@ interface InvoicePageProps {
   params: { orderId: string };
 }
 
-export default async function InvoicePage({ params }: { params: { orderId: string } }) {
+export default async function InvoicePage({ params }: any) {
   const order = await getOrderForInvoice(params.orderId);
 
   if (!order) {

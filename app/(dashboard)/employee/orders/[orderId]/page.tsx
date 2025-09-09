@@ -25,7 +25,7 @@ interface OrderDetailsPageProps {
   params: { orderId: string };
 }
 
-export default async function OrderDetailsPage({ params }: OrderDetailsPageProps) {
+export default async function OrderDetailsPage({ params }: any) {
   const session = await getServerSession(authOptions);
   if (!session) {
       return <div className="p-8">Please log in.</div>;

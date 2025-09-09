@@ -14,7 +14,7 @@ interface OrderConfirmationPageProps {
   params: { orderId: string };
 }
 
-export default async function OrderConfirmationPage({ params }: { params: { orderId: string } }) {
+export default async function OrderConfirmationPage({ params }: any) {
   const order = await getOrder(params.orderId);
 
   if (!order) {
