@@ -9,6 +9,11 @@ async function getOrder(id: string) {
   return await prisma.order.findUnique({ where: { id } });
 }
 
+// FIX: Correctly typed props
+interface OrderConfirmationPageProps {
+  params: { orderId: string };
+}
+
 export default async function OrderConfirmationPage({ params }: { params: { orderId: string } }) {
   const order = await getOrder(params.orderId);
 

@@ -19,6 +19,11 @@ async function getOrderForInvoice(id: string) {
   });
 }
 
+// FIX: Correctly typed props
+interface InvoicePageProps {
+  params: { orderId: string };
+}
+
 export default async function InvoicePage({ params }: { params: { orderId: string } }) {
   const order = await getOrderForInvoice(params.orderId);
 

@@ -3,6 +3,7 @@ import Image from 'next/image';
 import AddToCartButton from '@/components/AddToCartButton';
 import ReviewForm from '@/components/ReviewForm';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '../../../api/auth/[...nextauth]/route';
 import { format } from 'date-fns';
 
 const prisma = new PrismaClient();
@@ -19,6 +20,11 @@ async function getProduct(id: string) {
       },
     },
   });
+}
+
+// FIX: Correctly typed props
+interface ProductDetailPageProps {
+  params: { productId: string };
 }
 
 export default async function ProductDetailPage({ params }: { params: { productId: string } }) {

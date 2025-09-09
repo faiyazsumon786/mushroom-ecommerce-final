@@ -2,8 +2,8 @@ import { PrismaClient, OrderStatus } from '@prisma/client';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import Link from 'next/link';
-import UpdateOrderStatus from '../components/UpdateOrderStatus';
-import { formatCurrency } from '@/lib/formatCurrency'; // কারেন্সি ফরম্যাটার ইম্পোর্ট করুন
+import UpdateOrderStatus from '@/app/(dashboard)/components/UpdateOrderStatus';
+import { formatCurrency } from '@/lib/formatCurrency';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { getServerSession } from 'next-auth';
 
@@ -14,20 +14,21 @@ async function getOrderDetails(id: string) {
     where: { id },
     include: {
       user: true,
-      orderItems: {
-        include: { product: true },
-      },
+      orderItems: { include: { product: true } },
       payment: true,
     },
   });
 }
 
-export default async function OrderDetailsPage({ params }: { params: { orderId: string } }) {
-  // getServerSession(authOptions) is not strictly needed here if middleware protects the route,
-  // but it's good practice for Server Components that rely on session data.
+// FIX: Correctly typed props for dynamic pages
+interface OrderDetailsPageProps {
+  params: { orderId: string };
+}
+
+export default async function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const session = await getServerSession(authOptions);
   if (!session) {
-      return <div className="p-8 font-semibold text-red-600">Please log in to view this page.</div>;
+      return <div className="p-8">Please log in.</div>;
   }
   
   const order = await getOrderDetails(params.orderId);
