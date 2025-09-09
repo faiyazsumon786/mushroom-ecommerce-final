@@ -1,11 +1,11 @@
-import NextAuth, { AuthOptions, Session, User } from 'next-auth';
-import { JWT } from 'next-auth/jwt';
+import NextAuth, { AuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaClient, Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+const prisma = new new PrismaClient();
 
+// ধাপ ১: authOptions-কে একটি আলাদা constant হিসেবে তৈরি এবং export করা
 export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
@@ -15,10 +15,12 @@ export const authOptions: AuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials) return null;
-
+        if (!credentials?.email || !credentials.password) {
+          return null;
+        }
+        
         const user = await prisma.user.findUnique({ where: { email: credentials.email } });
-
+        
         if (user && bcrypt.compareSync(credentials.password, user.password)) {
           return {
             id: user.id,
@@ -31,25 +33,32 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
+  
+  pages: {
+    signIn: '/login',
+  },
+  
   callbacks: {
-    jwt: async ({ token, user }: { token: JWT; user?: User }) => {
+    jwt: async ({ token, user }) => {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.role = user.role as Role;
       }
       return token;
     },
-    session: async ({ session, token }: { session: Session; token: JWT }) => {
-      if (session.user) {
+    session: async ({ session, token }) => {
+      if (session?.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
       }
       return session;
     },
   },
+
   secret: process.env.NEXTAUTH_SECRET,
 };
 
+// ধাপ ২: সেই authOptions ব্যবহার করে handler তৈরি করা
 const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
