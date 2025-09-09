@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import Image from 'next/image';
 import { getServerSession } from 'next-auth';
 import SuggestProductModal from '../components/SuggestProductModal';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // <-- এই লাইনটি যোগ করুন
+import { authOptions } from '@/lib/auth';// <-- এই লাইনটি যোগ করুন
 
 const prisma = new PrismaClient();
 

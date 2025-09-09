@@ -2,6 +2,7 @@
 import { PrismaClient, OrderStatus } from '@prisma/client';
 import { FaUsers, FaBoxOpen, FaClipboardList, FaDollarSign } from 'react-icons/fa';
 
+
 const prisma = new PrismaClient();
 
 // Helper function to format currency

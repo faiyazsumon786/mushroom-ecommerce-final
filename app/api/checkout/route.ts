@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { CartItem } from '@/lib/cartStore';
-import { authOptions } from '../auth/[...nextauth]/route'; // 1. Import your authOptions
+import { authOptions } from '@/lib/auth'; // 1. Import your authOptions
 
 const prisma = new PrismaClient();
 
