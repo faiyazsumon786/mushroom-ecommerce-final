@@ -5,18 +5,14 @@ import { authOptions } from '../../auth/[...nextauth]/route';
 
 const prisma = new PrismaClient();
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { paymentId: string } }
-) {
+export async function PATCH(request: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
+    const id = new URL(request.url).pathname.split('/').pop();
     const updatedPayment = await prisma.supplierPayment.update({
-      where: { id: params.paymentId },
+      where: { id },
       data: {
         status: 'PAID',
         processedById: session.user.id,

@@ -3,14 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-export async function PUT(
-    request: NextRequest,
-    { params }: { params: { productId: string } }
-) {
+export async function PUT(request: NextRequest) {
     try {
+        const id = new URL(request.url).pathname.split('/').pop();
         const data = await request.json();
         const updatedProduct = await prisma.supplierProduct.update({
-            where: { id: params.productId },
+            where: { id },
             data: {
                 name: data.name,
                 description: data.description,
@@ -24,14 +22,10 @@ export async function PUT(
     }
 }
 
-export async function DELETE(
-    request: NextRequest,
-    { params }: { params: { productId: string } }
-) {
+export async function DELETE(request: NextRequest) {
     try {
-        await prisma.supplierProduct.delete({
-            where: { id: params.productId },
-        });
+        const id = new URL(request.url).pathname.split('/').pop();
+        await prisma.supplierProduct.delete({ where: { id } });
         return NextResponse.json({ message: 'Product deleted successfully' });
     } catch (error) {
         return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
