@@ -4,14 +4,17 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-// FIX: The function signature is now (request, context) as expected by the latest Next.js versions
-export async function PATCH(
-  request: NextRequest,
-  context: { params: { orderId: string } }
-) {
+// চূড়ান্ত সমাধান: আমরা এখন আর দ্বিতীয় আর্গুমেন্ট (context বা params) ব্যবহার করছি না
+export async function PATCH(request: NextRequest) {
   try {
-    // FIX: The orderId is now extracted from context.params
-    const id = context.params.orderId;
+    // URL থেকে সরাসরি ID বের করে আনা হচ্ছে
+    const url = new URL(request.url);
+    const id = url.pathname.split('/').pop(); // URL-এর শেষ অংশটিই হলো ID
+
+    if (!id) {
+      return NextResponse.json({ error: 'Order ID is missing from URL' }, { status: 400 });
+    }
+
     const { status } = (await request.json()) as { status: OrderStatus };
 
     if (!status || !Object.values(OrderStatus).includes(status)) {
