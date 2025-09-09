@@ -1,28 +1,36 @@
-// src/app/(dashboard)/admin/components/AddProductModal.tsx
 'use client';
 
 import { useState } from 'react';
 import ProductForm from './ProductForm';
+import { useSession } from 'next-auth/react'; // <-- useSession ইম্পোর্ট করুন
 
 export default function AddProductModal() {
   const [isOpen, setIsOpen] = useState(false);
+  const { data: session } = useSession(); // <-- সেশন থেকে ডেটা নিন
 
   const handleClose = () => {
     setIsOpen(false);
   };
+  
+  // অ্যাডমিন বা এমপ্লয়ি না হলে বাটনটিই দেখানো হবে না
+  if (session?.user?.role !== 'ADMIN' && session?.user?.role !== 'EMPLOYEE') {
+    return null;
+  }
+  
+  const userRole = session.user.role;
 
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="bg-green-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+        className="bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         Add New Product
       </button>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900 bg-opacity-75">
-          <div className="relative w-full max-w-2xl max-h-full overflow-y-auto bg-white rounded-xl shadow-lg border border-gray-200">
+          <div className="relative w-full max-w-2xl max-h-full overflow-y-auto bg-white rounded-xl shadow-lg border">
             <button
               onClick={handleClose}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
@@ -31,7 +39,8 @@ export default function AddProductModal() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <ProductForm onClose={handleClose} />
+            {/* এখানে userRole prop টি পাস করা হয়েছে */}
+            <ProductForm onClose={handleClose} userRole={userRole} />
           </div>
         </div>
       )}
