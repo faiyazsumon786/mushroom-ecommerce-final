@@ -3,7 +3,7 @@ import Image from 'next/image';
 import AddToCartButton from '@/components/AddToCartButton';
 import ReviewForm from '@/components/ReviewForm';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { format } from 'date-fns';
 
 const prisma = new PrismaClient();
