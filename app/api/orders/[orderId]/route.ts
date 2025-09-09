@@ -4,13 +4,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
-// ফাংশনের সিগনেচারটি এখানে ঠিক করা হয়েছে
+// FIX: The function signature is now (request, context) as expected by the latest Next.js versions
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  context: { params: { orderId: string } }
 ) {
   try {
-    const id = params.orderId;
+    // FIX: The orderId is now extracted from context.params
+    const id = context.params.orderId;
     const { status } = (await request.json()) as { status: OrderStatus };
 
     if (!status || !Object.values(OrderStatus).includes(status)) {
