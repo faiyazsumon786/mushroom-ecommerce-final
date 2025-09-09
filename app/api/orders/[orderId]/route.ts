@@ -1,8 +1,10 @@
-import { PrismaClient, Prisma, OrderStatus } from '@prisma/client';
+// src/app/api/orders/[orderId]/route.ts
+import { PrismaClient, OrderStatus } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
+// ফাংশনের সিগনেচারটি এখানে ঠিক করা হয়েছে
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { orderId: string } }
@@ -21,8 +23,8 @@ export async function PATCH(
         include: { orderItems: true },
       });
       if (!orderToCancel) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-
-      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      
+      await prisma.$transaction(async (tx) => {
         for (const item of orderToCancel.orderItems) {
           await tx.product.update({
             where: { id: item.productId },
@@ -43,11 +45,8 @@ export async function PATCH(
       data: { status },
     });
     return NextResponse.json(updatedOrder);
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error('Failed to update order:', error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+  } catch (error) {
+    console.error("Order update error:", error);
     return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
   }
 }
