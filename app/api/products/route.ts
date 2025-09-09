@@ -3,7 +3,7 @@ import { PrismaClient, ProductStatus, ProductType } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
