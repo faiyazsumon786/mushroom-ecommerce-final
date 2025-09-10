@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, ChangeEvent } from 'react';
 import { FaUpload } from 'react-icons/fa';
 
@@ -40,7 +39,7 @@ export default function CustomFileInput({ name, label, multiple = false, require
           multiple={multiple}
           required={required}
           onChange={handleFileChange}
-          className="sr-only" // This hides the default ugly input
+          className="sr-only"
         />
         <span className="ml-4 text-sm text-gray-500">
           {fileNames.length > 0 ? fileNames.join(', ') : 'No file chosen'}

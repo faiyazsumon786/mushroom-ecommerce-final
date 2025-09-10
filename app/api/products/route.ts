@@ -1,10 +1,9 @@
-import { PrismaClient, ProductStatus, ProductType } from '@prisma/client';
+import { ProductStatus, ProductType } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { authOptions } from '@/lib/auth';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma'; // <-- শুধুমাত্র এই একটি ইম্পোর্ট থাকবে
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -12,7 +11,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ছবি আপলোড করার জন্য একটি হেল্পার ফাংশন
 async function uploadToCloudinary(buffer: Buffer): Promise<UploadApiResponse> {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
@@ -23,13 +21,13 @@ async function uploadToCloudinary(buffer: Buffer): Promise<UploadApiResponse> {
   });
 }
 
-// অ্যাডমিন প্যানেলে সব প্রোডাক্ট দেখানোর জন্য
+// অ্যাডমিন প্যানেলে সব প্রোডাক্ট দেখানোর জন্য (সঠিক include সহ)
 export async function GET() {
     try {
         const products = await prisma.product.findMany({
             include: {
                 category: true,
-                supplier: { include: { user: true } },
+                createdBy: true, // supplier এর পরিবর্তে createdBy আনা হয়েছে
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -39,7 +37,7 @@ export async function GET() {
     }
 }
 
-// নতুন প্রোডাক্ট তৈরি করার জন্য
+// নতুন প্রোডাক্ট তৈরি করার জন্য (সঠিক কোড)
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -49,7 +47,6 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     
-    // Primary Image Upload
     const primaryImageFile = formData.get('primaryImage') as File | null;
     if (!primaryImageFile || primaryImageFile.size === 0) {
       return NextResponse.json({ error: 'Primary image is required.' }, { status: 400 });
@@ -57,7 +54,6 @@ export async function POST(request: Request) {
     const primaryImageBuffer = Buffer.from(await primaryImageFile.arrayBuffer());
     const primaryImageUpload = await uploadToCloudinary(primaryImageBuffer);
     
-    // Gallery Images Upload
     const galleryImageFiles = formData.getAll('galleryImages') as File[];
     const uploadPromises = galleryImageFiles
       .filter(file => file.size > 0)
@@ -70,8 +66,7 @@ export async function POST(request: Request) {
 
     const userRole = session.user.role;
     const productStatus = userRole === 'ADMIN' ? ProductStatus.LIVE : ProductStatus.PENDING_APPROVAL;
-
-    // ডাটাবেসে সেভ করার জন্য ডেটা অবজেক্ট তৈরি
+    
     const productData: any = {
         name: formData.get('name') as string,
         shortDescription: formData.get('shortDescription') as string,
@@ -88,8 +83,7 @@ export async function POST(request: Request) {
             create: galleryImageUrls.map(url => ({ url })),
         },
     };
-
-    // ঐচ্ছিক ফিল্ডগুলো যোগ করা
+    
     const subcategoryId = formData.get('subcategoryId') as string;
     if (subcategoryId) productData.subcategoryId = subcategoryId;
 
@@ -99,8 +93,6 @@ export async function POST(request: Request) {
     const weightUnit = formData.get('weightUnit') as string;
     if (weightUnit) productData.weightUnit = weightUnit;
     
-    // --- supplierId আর ফর্ম থেকে নেওয়া হচ্ছে না ---
-
     const newProduct = await prisma.product.create({
         data: productData,
     });

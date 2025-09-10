@@ -9,8 +9,10 @@ import imageCompression from 'browser-image-compression';
 interface ProductFormProps {
   onClose: () => void;
   initialData?: Product | null;
-  userRole: 'ADMIN' | 'EMPLOYEE' | 'SUPPLIER'; 
 }
+
+// Helper to format enum strings (e.g., FRESH -> Fresh)
+const formatEnum = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 
 export default function ProductForm({ onClose, initialData }: ProductFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -42,37 +44,31 @@ export default function ProductForm({ onClose, initialData }: ProductFormProps) 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
+    toast.loading(initialData ? 'Updating product...' : 'Saving product...');
     
     const form = e.currentTarget;
     const formData = new FormData();
 
-    // Append all text fields
     new FormData(form).forEach((value, key) => {
-      // We handle files separately, so ignore them here
       if (!(value instanceof File)) {
         formData.append(key, value);
       }
     });
     
-    const options = {
-      maxSizeMB: 1,
-      maxWidthOrHeight: 1024,
-      useWebWorker: true,
-    };
+    const options = { maxSizeMB: 1, maxWidthOrHeight: 1024, useWebWorker: true };
 
     try {
-      // Compress and append primary image
       const primaryImageFile = form.primaryImage.files[0];
-      if (primaryImageFile) {
+      if (primaryImageFile && primaryImageFile.size > 0) {
         const compressedFile = await imageCompression(primaryImageFile, options);
         formData.append('primaryImage', compressedFile, compressedFile.name);
       } else if (!initialData) {
         toast.error("Primary image is required.");
         setIsLoading(false);
+        toast.dismiss();
         return;
       }
 
-      // Compress and append gallery images
       const galleryImageFiles = Array.from(form.galleryImages.files);
       for (const file of galleryImageFiles) {
         if (file.size > 0) {
@@ -81,33 +77,34 @@ export default function ProductForm({ onClose, initialData }: ProductFormProps) 
         }
       }
 
-      const promise = fetch('/api/products', { method: 'POST', body: formData });
+      const apiEndpoint = initialData ? `/api/products/${initialData.id}` : '/api/products';
+      const method = initialData ? 'PUT' : 'POST';
+
+      const response = await fetch(apiEndpoint, { method, body: formData });
       
-      toast.promise(promise, {
-        loading: 'Saving product...',
-        success: (res) => {
-          if (!res.ok) {
-            res.json().then(data => toast.error(`Failed: ${data.details || 'Could not create product.'}`));
-            throw new Error('Failed to save.');
-          }
-          router.refresh();
-          onClose();
-          return 'Product created successfully!';
-        },
-        error: (err) => `Error: ${err.message}`,
-      });
+      toast.dismiss();
 
-      promise.finally(() => setIsLoading(false));
-
+      if (response.ok) {
+        toast.success(`Product ${initialData ? 'updated' : 'created'} successfully!`);
+        router.refresh();
+        onClose();
+      } else {
+        const data = await response.json();
+        toast.error(`Failed: ${data.details || 'Could not save product.'}`);
+      }
     } catch (error) {
-      toast.error('Image compression failed or another error occurred.');
+      toast.dismiss();
+      toast.error('An error occurred during image processing or upload.');
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-6 text-gray-800">Add New Product</h2>
+      <h2 className="text-2xl font-semibold mb-6 text-gray-800">
+        {initialData ? 'Edit Product' : 'Add New Product'}
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-5 max-h-[70vh] overflow-y-auto pr-4">
         <div><label className="block text-sm font-medium text-gray-800">Name</label><input name="name" defaultValue={initialData?.name} required className="w-full mt-1 p-2 border rounded-md text-gray-900" /></div>
         <div><label className="block text-sm font-medium text-gray-800">Short Description</label><textarea name="shortDescription" defaultValue={initialData?.shortDescription || ''} rows={2} className="w-full mt-1 p-2 border rounded-md text-gray-900" /></div>
@@ -139,7 +136,7 @@ export default function ProductForm({ onClose, initialData }: ProductFormProps) 
           <div>
             <label className="block text-sm font-medium text-gray-800">Type</label>
             <select name="type" defaultValue={initialData?.type} required className="w-full mt-1 p-2 border rounded-md bg-white text-gray-900">
-              {Object.values(ProductType).map(type => (<option key={type} value={type}>{type}</option>))}
+              {Object.values(ProductType).map(type => (<option key={type} value={type}>{formatEnum(type)}</option>))}
             </select>
           </div>
           <div>
@@ -157,11 +154,9 @@ export default function ProductForm({ onClose, initialData }: ProductFormProps) 
             </select>
           </div>
         </div>
-
-        {/* সাপ্লায়ার সেকশনটি এখন পুরোপুরি মুছে ফেলা হয়েছে */}
         
         <button type="submit" disabled={isLoading} className="w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50">
-          {isLoading ? 'Saving...' : 'Save Product'}
+          {isLoading ? (initialData ? 'Updating...' : 'Saving...') : (initialData ? 'Save Changes' : 'Save Product')}
         </button>
       </form>
     </div>
