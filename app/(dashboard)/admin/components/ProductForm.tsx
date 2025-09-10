@@ -11,7 +11,6 @@ interface ProductFormProps {
   initialData?: Product | null;
 }
 
-// Helper to format enum strings (e.g., FRESH -> Fresh)
 const formatEnum = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 
 export default function ProductForm({ onClose, initialData }: ProductFormProps) {
@@ -58,7 +57,7 @@ export default function ProductForm({ onClose, initialData }: ProductFormProps) 
     const options = { maxSizeMB: 1, maxWidthOrHeight: 1024, useWebWorker: true };
 
     try {
-      const primaryImageFile = form.primaryImage.files[0];
+      const primaryImageFile = (form.elements.namedItem('primaryImage') as HTMLInputElement).files?.[0];
       if (primaryImageFile && primaryImageFile.size > 0) {
         const compressedFile = await imageCompression(primaryImageFile, options);
         formData.append('primaryImage', compressedFile, compressedFile.name);
@@ -69,7 +68,7 @@ export default function ProductForm({ onClose, initialData }: ProductFormProps) 
         return;
       }
 
-      const galleryImageFiles = Array.from(form.galleryImages.files);
+      const galleryImageFiles = Array.from((form.elements.namedItem('galleryImages') as HTMLInputElement).files || []);
       for (const file of galleryImageFiles) {
         if (file.size > 0) {
           const compressedFile = await imageCompression(file, options);
