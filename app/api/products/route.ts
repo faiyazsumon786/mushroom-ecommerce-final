@@ -1,4 +1,3 @@
-// src/app/api/products/route.ts
 import { PrismaClient, ProductStatus, ProductType } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
@@ -13,7 +12,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Helper function to upload a buffer to Cloudinary
+// ছবি আপলোড করার জন্য একটি হেল্পার ফাংশন
 async function uploadToCloudinary(buffer: Buffer): Promise<UploadApiResponse> {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
@@ -24,6 +23,23 @@ async function uploadToCloudinary(buffer: Buffer): Promise<UploadApiResponse> {
   });
 }
 
+// অ্যাডমিন প্যানেলে সব প্রোডাক্ট দেখানোর জন্য
+export async function GET() {
+    try {
+        const products = await prisma.product.findMany({
+            include: {
+                category: true,
+                supplier: { include: { user: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+        return NextResponse.json(products);
+    } catch (error) {
+        return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
+    }
+}
+
+// নতুন প্রোডাক্ট তৈরি করার জন্য
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -32,17 +48,16 @@ export async function POST(request: Request) {
 
   try {
     const formData = await request.formData();
+    
+    // Primary Image Upload
     const primaryImageFile = formData.get('primaryImage') as File | null;
-
     if (!primaryImageFile || primaryImageFile.size === 0) {
       return NextResponse.json({ error: 'Primary image is required.' }, { status: 400 });
     }
-
-    // Upload primary image first
     const primaryImageBuffer = Buffer.from(await primaryImageFile.arrayBuffer());
     const primaryImageUpload = await uploadToCloudinary(primaryImageBuffer);
     
-    // Gallery images are uploaded in parallel for speed
+    // Gallery Images Upload
     const galleryImageFiles = formData.getAll('galleryImages') as File[];
     const uploadPromises = galleryImageFiles
       .filter(file => file.size > 0)
@@ -50,41 +65,47 @@ export async function POST(request: Request) {
         const buffer = Buffer.from(await file.arrayBuffer());
         return uploadToCloudinary(buffer);
       });
-
     const galleryUploadResults = await Promise.all(uploadPromises);
     const galleryImageUrls = galleryUploadResults.map(result => result.secure_url);
 
-    // ... (The rest of the code for validation and saving to Prisma remains the same)
-    const data = Object.fromEntries(formData.entries());
     const userRole = session.user.role;
     const productStatus = userRole === 'ADMIN' ? ProductStatus.LIVE : ProductStatus.PENDING_APPROVAL;
 
-    const newProduct = await prisma.product.create({
-        data: {
-            name: data.name as string,
-            shortDescription: data.shortDescription as string,
-            description: data.description as string,
-            price: parseFloat(data.price as string),
-            wholesalePrice: parseFloat(data.wholesalePrice as string),
-            stock: parseInt(data.stock as string),
-            weight: data.weight ? parseFloat(data.weight as string) : null,
-            weightUnit: data.weightUnit as string | null,
-
-            type: data.type as ProductType,
-            categoryId: data.categoryId as string,
-            subcategoryId: (data.subcategoryId as string) || null,
-            supplierId: data.supplierId as string,
-            createdById: session.user.id,
-            status: productStatus,
-            image: primaryImageUpload.secure_url,
-            images: {
-                create: galleryImageUrls.map(url => ({ url })),
-            },
+    // ডাটাবেসে সেভ করার জন্য ডেটা অবজেক্ট তৈরি
+    const productData: any = {
+        name: formData.get('name') as string,
+        shortDescription: formData.get('shortDescription') as string,
+        description: formData.get('description') as string,
+        price: parseFloat(formData.get('price') as string),
+        wholesalePrice: parseFloat(formData.get('wholesalePrice') as string),
+        stock: parseInt(formData.get('stock') as string),
+        type: formData.get('type') as ProductType,
+        categoryId: formData.get('categoryId') as string,
+        createdById: session.user.id,
+        status: productStatus,
+        image: primaryImageUpload.secure_url,
+        images: {
+            create: galleryImageUrls.map(url => ({ url })),
         },
+    };
+
+    // ঐচ্ছিক ফিল্ডগুলো যোগ করা
+    const subcategoryId = formData.get('subcategoryId') as string;
+    if (subcategoryId) productData.subcategoryId = subcategoryId;
+
+    const weight = formData.get('weight') as string;
+    if (weight) productData.weight = parseFloat(weight);
+
+    const weightUnit = formData.get('weightUnit') as string;
+    if (weightUnit) productData.weightUnit = weightUnit;
+    
+    // --- supplierId আর ফর্ম থেকে নেওয়া হচ্ছে না ---
+
+    const newProduct = await prisma.product.create({
+        data: productData,
     });
 
     return NextResponse.json(newProduct, { status: 201 });
-
   } catch (error: any) {
     console.error("Product creation error:", error);
     return NextResponse.json({ error: 'Failed to create product', details: error.message }, { status: 500 });

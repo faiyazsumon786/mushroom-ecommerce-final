@@ -272,8 +272,8 @@ model SupplierProduct {
   description    String
   wholesalePrice Float
   unit           String
-  supplier       SupplierProfile  @relation(fields: [supplierId], references: [id])
-  supplierId     String
+  supplier       SupplierProfile?  @relation(fields: [supplierId], references: [id])
+  supplierId     String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   
