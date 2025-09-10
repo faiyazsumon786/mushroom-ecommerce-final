@@ -138,7 +138,7 @@ export default function ProductForm({ onClose, initialData, userRole }: ProductF
           </div>
         </div>
         
-        {(userRole === 'ADMIN' || userRole === 'EMPLOYEE') && (
+        {/* {(userRole === 'ADMIN' || userRole === 'EMPLOYEE') && (
         <div>
           <label className="block text-sm font-medium">Supplier</label>
           <select name="supplierId" required className="w-full mt-1 p-2 border rounded-md bg-white text-gray-900">
@@ -146,7 +146,7 @@ export default function ProductForm({ onClose, initialData, userRole }: ProductF
             {suppliers.map(sup => <option key={sup.id} value={sup.id}>{sup.user?.name ?? 'Unnamed Supplier'}</option>)}
           </select>
         </div>
-        )}
+        )} */}
         
         <button type="submit" disabled={isLoading} className="w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50">
           {isLoading ? 'Saving...' : 'Save Product'}
