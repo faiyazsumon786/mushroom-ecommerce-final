@@ -148,13 +148,12 @@ export default function ProductTable({ products }: { products: FullProduct[] }) 
 
       {/* Edit Product Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900 bg-opacity-75">
-          <div className="relative w-full max-w-2xl max-h-full bg-white rounded-xl shadow-lg border">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl z-10">&times;</button>
+        <div className="fixed inset-0 ...">
+          <div className="relative w-full max-w-2xl ...">
+            <button onClick={() => setIsModalOpen(false)} className="absolute ...">&times;</button>
             <ProductForm
               onClose={() => setIsModalOpen(false)}
               initialData={editingProduct}
-              userRole={userRole as 'ADMIN' | 'EMPLOYEE' | 'SUPPLIER'}
             />
           </div>
         </div>

@@ -76,6 +76,7 @@ export default function ProductForm({ onClose, initialData }: ProductFormProps) 
         }
       }
 
+      // Edit functionality will require a different API endpoint and method
       const apiEndpoint = initialData ? `/api/products/${initialData.id}` : '/api/products';
       const method = initialData ? 'PUT' : 'POST';
 
@@ -105,6 +106,7 @@ export default function ProductForm({ onClose, initialData }: ProductFormProps) 
         {initialData ? 'Edit Product' : 'Add New Product'}
       </h2>
       <form onSubmit={handleSubmit} className="space-y-5 max-h-[70vh] overflow-y-auto pr-4">
+        {/* All fields except supplier */}
         <div><label className="block text-sm font-medium text-gray-800">Name</label><input name="name" defaultValue={initialData?.name} required className="w-full mt-1 p-2 border rounded-md text-gray-900" /></div>
         <div><label className="block text-sm font-medium text-gray-800">Short Description</label><textarea name="shortDescription" defaultValue={initialData?.shortDescription || ''} rows={2} className="w-full mt-1 p-2 border rounded-md text-gray-900" /></div>
         <div><label className="block text-sm font-medium text-gray-800">Long Description</label><textarea name="description" defaultValue={initialData?.description} required rows={4} className="w-full mt-1 p-2 border rounded-md text-gray-900" /></div>
