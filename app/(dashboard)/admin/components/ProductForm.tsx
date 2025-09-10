@@ -9,6 +9,7 @@ import imageCompression from 'browser-image-compression';
 interface ProductFormProps {
   onClose: () => void;
   initialData?: Product | null;
+  userRole: 'ADMIN' | 'EMPLOYEE' | 'SUPPLIER'; 
 }
 
 export default function ProductForm({ onClose, initialData }: ProductFormProps) {

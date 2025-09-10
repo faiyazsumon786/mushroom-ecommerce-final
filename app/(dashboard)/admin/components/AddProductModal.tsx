@@ -2,22 +2,21 @@
 
 import { useState } from 'react';
 import ProductForm from './ProductForm';
-import { useSession } from 'next-auth/react'; // <-- useSession ইম্পোর্ট করুন
+import { useSession } from 'next-auth/react';
 
 export default function AddProductModal() {
   const [isOpen, setIsOpen] = useState(false);
-  const { data: session } = useSession(); // <-- সেশন থেকে ডেটা নিন
+  const { data: session } = useSession(); // সেশন থেকে ডেটা নিন
 
   const handleClose = () => {
     setIsOpen(false);
   };
   
   // অ্যাডমিন বা এমপ্লয়ি না হলে বাটনটিই দেখানো হবে না
-  if (session?.user?.role !== 'ADMIN' && session?.user?.role !== 'EMPLOYEE') {
+  const userRole = session?.user?.role as 'ADMIN' | 'EMPLOYEE' | 'SUPPLIER';
+  if (userRole !== 'ADMIN' && userRole !== 'EMPLOYEE') {
     return null;
   }
-  
-  const userRole = session.user.role;
 
   return (
     <>
