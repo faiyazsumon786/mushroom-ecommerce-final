@@ -1,15 +1,17 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Product, Category, SupplierProfile, User, ProductStatus } from '@prisma/client';
-import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { Product, Category, User, ProductStatus } from '@prisma/client';
 import ProductForm from './ProductForm';
 import { useSession } from 'next-auth/react';
 
+// নতুন এবং সঠিক টাইপ
 type FullProduct = Product & {
   category: Category;
-  supplier: SupplierProfile & { user: User };
+  createdBy: User;
 };
 
 export default function ProductTable({ products }: { products: FullProduct[] }) {
@@ -145,24 +147,14 @@ export default function ProductTable({ products }: { products: FullProduct[] }) 
       </div>
 
       {/* Edit Product Modal */}
-      {isModalOpen && editingProduct && (
+      {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900 bg-opacity-75">
-          <div className="relative w-full max-w-2xl max-h-full overflow-y-auto bg-white rounded-xl shadow-lg border">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl z-10"
-              aria-label="Close modal"
-            >
-              &times;
-            </button>
+          <div className="relative w-full max-w-2xl max-h-full bg-white rounded-xl shadow-lg border">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl z-10">&times;</button>
             <ProductForm
-              onClose={() => {
-                setIsModalOpen(false);
-                setEditingProduct(null);
-                router.refresh();
-              }}
+              onClose={() => setIsModalOpen(false)}
               initialData={editingProduct}
-              userRole={userRole ?? 'SUPPLIER'}
+              userRole={userRole as 'ADMIN' | 'EMPLOYEE' | 'SUPPLIER'}
             />
           </div>
         </div>

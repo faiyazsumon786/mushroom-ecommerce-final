@@ -76,7 +76,6 @@ model SupplierProfile {
   address          String
   phone            String
   
-  products         Product[]
   shipments        Shipment[]
   payments         SupplierPayment[]
   supplierProducts SupplierProduct[]
@@ -121,8 +120,6 @@ model Product {
   categoryId            String
   subcategoryId         String?          // সাব-ক্যাটাগরি (optional)
 
-  supplier     SupplierProfile? @relation(fields: [supplierId], references: [id])
-  supplierId   String?
   createdBy             User             @relation(fields: [createdById], references: [id])
   createdById           String
   

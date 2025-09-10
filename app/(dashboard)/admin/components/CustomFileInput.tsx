@@ -1,4 +1,3 @@
-// src/app/(dashboard)/admin/components/CustomFileInput.tsx
 'use client';
 
 import { useState, ChangeEvent } from 'react';
@@ -15,15 +14,17 @@ export default function CustomFileInput({ name, label, multiple = false, require
   const [fileNames, setFileNames] = useState<string[]>([]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
+    if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       setFileNames(files.map(file => file.name));
+    } else {
+      setFileNames([]);
     }
   };
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <label className="block text-sm font-medium text-gray-800">{label}</label>
       <div className="mt-1 flex items-center">
         <label
           htmlFor={name}
@@ -39,7 +40,7 @@ export default function CustomFileInput({ name, label, multiple = false, require
           multiple={multiple}
           required={required}
           onChange={handleFileChange}
-          className="sr-only" // This hides the default input
+          className="sr-only" // This hides the default ugly input
         />
         <span className="ml-4 text-sm text-gray-500">
           {fileNames.length > 0 ? fileNames.join(', ') : 'No file chosen'}
