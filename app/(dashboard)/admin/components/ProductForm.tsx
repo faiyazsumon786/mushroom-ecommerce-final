@@ -9,16 +9,18 @@ import imageCompression from 'browser-image-compression';
 interface ProductFormProps {
   onClose: () => void;
   initialData?: Product | null;
+  userRole?: "ADMIN" | "EMPLOYEE";
 }
 
 const formatEnum = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase().replace('_', ' ');
 
-export default function ProductForm({ onClose, initialData }: ProductFormProps) {
+export default function ProductForm({ onClose, initialData, userRole }: ProductFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState(initialData?.categoryId || '');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  console.log("User Role:", userRole);
 
   useEffect(() => {
     async function fetchCategories() {

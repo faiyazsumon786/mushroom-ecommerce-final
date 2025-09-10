@@ -95,6 +95,7 @@ model Category {
   imageUrl  String?
   
   products  Product[]
+  subProducts   Product[] @relation("SubcategoryRelation")
 
   parentId      String?
   parent        Category?  @relation("Subcategories", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -119,6 +120,7 @@ model Product {
   
   category         Category       @relation(fields: [categoryId], references: [id])
   categoryId       String
+  subcategory      Category?      @relation("SubcategoryRelation", fields: [subcategoryId], references: [id])
   subcategoryId    String?
   
   createdBy        User           @relation(fields: [createdById], references: [id])
