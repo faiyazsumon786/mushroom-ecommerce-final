@@ -1,6 +1,6 @@
 // src/app/api/auth/[...nextauth]/route.ts
 import NextAuth from 'next-auth';
-import { authOptions } from '@/lib/auth'; // নতুন ফাইল থেকে ইম্পোর্ট করা হচ্ছে
+import { authOptions } from '@/lib/auth';
 
 const handler = NextAuth(authOptions);
 

@@ -1,9 +1,9 @@
-import { ProductStatus, ProductType } from '@prisma/client';
+import { PrismaClient, ProductStatus, ProductType } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { authOptions } from '@/lib/auth';
-import prisma from '@/lib/prisma'; // <-- শুধুমাত্র এই একটি ইম্পোর্ট থাকবে
+import prisma from '@/lib/prisma';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -21,23 +21,6 @@ async function uploadToCloudinary(buffer: Buffer): Promise<UploadApiResponse> {
   });
 }
 
-// অ্যাডমিন প্যানেলে সব প্রোডাক্ট দেখানোর জন্য (সঠিক include সহ)
-export async function GET() {
-    try {
-        const products = await prisma.product.findMany({
-            include: {
-                category: true,
-                createdBy: true, // supplier এর পরিবর্তে createdBy আনা হয়েছে
-            },
-            orderBy: { createdAt: 'desc' },
-        });
-        return NextResponse.json(products);
-    } catch (error) {
-        return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
-    }
-}
-
-// নতুন প্রোডাক্ট তৈরি করার জন্য (সঠিক কোড)
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -88,7 +71,7 @@ export async function POST(request: Request) {
     if (subcategoryId) productData.subcategoryId = subcategoryId;
 
     const weight = formData.get('weight') as string;
-    if (weight) productData.weight = parseFloat(weight);
+    if (weight && weight.trim() !== '') productData.weight = parseFloat(weight);
 
     const weightUnit = formData.get('weightUnit') as string;
     if (weightUnit) productData.weightUnit = weightUnit;

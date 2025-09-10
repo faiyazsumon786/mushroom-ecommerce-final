@@ -90,42 +90,43 @@ model WholesalerProfile {
 }
 
 model Category {
-  id            String     @id @default(cuid())
-  name          String     @unique
-  imageUrl      String?
+  id        String    @id @default(cuid())
+  name      String    @unique
+  imageUrl  String?
   
-  products      Product[]
-  
+  products  Product[]
+
   parentId      String?
   parent        Category?  @relation("Subcategories", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   subcategories Category[] @relation("Subcategories")
 }
 
 model Product {
-  id                    String           @id @default(cuid())
-  name                  String
-  shortDescription      String
-  description           String
-  image                 String
-  price                 Float
-  wholesalePrice        Float
-  stock                 Int              @default(0)
-  status                ProductStatus    @default(DRAFT)
-  type                  ProductType      @default(FRESH)
-  createdAt             DateTime         @default(now())
-  updatedAt             DateTime         @updatedAt
-  weight                Float?
-  weightUnit            String?
-  category              Category         @relation(fields: [categoryId], references: [id])
-  categoryId            String
-  subcategoryId         String?          // সাব-ক্যাটাগরি (optional)
-
-  createdBy             User             @relation(fields: [createdById], references: [id])
-  createdById           String
+  id               String         @id @default(cuid())
+  name             String
+  shortDescription String?
+  description      String
+  image            String
+  price            Float
+  wholesalePrice   Float
+  stock            Int            @default(0)
+  status           ProductStatus  @default(DRAFT)
+  type             ProductType    @default(FRESH)
+  weight           Float?
+  weightUnit       String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
   
-  orderItems            OrderItem[]
-  reviews               Review[]
-  images                ProductImage[]
+  category         Category       @relation(fields: [categoryId], references: [id])
+  categoryId       String
+  subcategoryId    String?
+  
+  createdBy        User           @relation(fields: [createdById], references: [id])
+  createdById      String
+  
+  orderItems       OrderItem[]
+  reviews          Review[]
+  images           ProductImage[]
   sourceSupplierProduct SupplierProduct?
 }
 
@@ -153,12 +154,12 @@ model Review {
 
 model Order {
   id              String      @id @default(cuid())
-  orderNumber     Int         @unique @default(autoincrement()) // <-- এই লাইনটি যোগ করুন
+  orderNumber     Int         @unique @default(autoincrement())
   user            User        @relation(fields: [userId], references: [id])
   userId          String
   totalAmount     Float
   status          OrderStatus @default(PENDING)
-  createdAt       DateTime    @default(now()) // আমরা এটিকে "Order Date" হিসেবে ব্যবহার করব
+  createdAt       DateTime    @default(now())
   customerName    String
   shippingAddress String
   customerPhone   String?
@@ -215,26 +216,26 @@ model StockEntry {
 }
 
 model SupplierPayment {
-  id            String          @id @default(cuid())
+  id            String    @id @default(cuid())
   supplier      SupplierProfile @relation(fields: [supplierId], references: [id])
   supplierId    String
   amount        Float
-  status        PaymentStatus   @default(DUE)
-  shipment      Shipment        @relation(fields: [shipmentId], references: [id])
-  shipmentId    String          @unique
-  processedBy   User?           @relation(fields: [processedById], references: [id])
+  status        PaymentStatus @default(DUE)
+  shipment      Shipment      @relation(fields: [shipmentId], references: [id])
+  shipmentId    String        @unique
+  processedBy   User?         @relation(fields: [processedById], references: [id])
   processedById String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Shipment {
-  id           String           @id @default(cuid())
-  supplier     SupplierProfile  @relation(fields: [supplierId], references: [id])
+  id           String         @id @default(cuid())
+  supplier     SupplierProfile @relation(fields: [supplierId], references: [id])
   supplierId   String
   totalValue   Float
-  status       ShipmentStatus   @default(SHIPPED)
-  createdAt    DateTime         @default(now())
+  status       ShipmentStatus @default(SHIPPED)
+  createdAt    DateTime       @default(now())
   receivedAt   DateTime?
   
   items        ShipmentItem[]
@@ -253,29 +254,29 @@ model ShipmentItem {
   wholesalePrice    Float
 }
 
-model Banner {
-  id        String   @id @default(cuid())
-  imageUrl  String
-  title     String?
-  link      String?  // Banner will link to this URL
-  isActive  Boolean  @default(true)
-  order     Int      @default(0) // To control the display order
-  createdAt DateTime @default(now())
-}
-
 model SupplierProduct {
-  id             String           @id @default(cuid())
+  id             String @id @default(cuid())
   name           String
   description    String
   wholesalePrice Float
   unit           String
-  supplier       SupplierProfile?  @relation(fields: [supplierId], references: [id])
-  supplierId     String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  supplier       SupplierProfile @relation(fields: [supplierId], references: [id])
+  supplierId     String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   
-  mainProduct    Product?         @relation(fields: [mainProductId], references: [id])
-  mainProductId  String?          @unique
+  mainProduct    Product? @relation(fields: [mainProductId], references: [id])
+  mainProductId  String?  @unique
 
   shipmentItems  ShipmentItem[]
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  title     String?
+  link      String?
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
 }
