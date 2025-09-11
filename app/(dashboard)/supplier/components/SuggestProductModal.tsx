@@ -29,7 +29,7 @@ export default function SuggestProductModal() {
             <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 text-gray-400 ...">
               {/* Close Icon SVG */}
             </button>
-            <ProductForm onClose={() => setIsOpen(false)} userRole={userRole} />
+            <ProductForm onClose={() => setIsOpen(false)} />
           </div>
         </div>
       )}

@@ -5,6 +5,10 @@ import ProductForm from './ProductForm';
 export default function AddProductModal() {
   const [isOpen, setIsOpen] = useState(false);
 
+  // এখানে তুমি role ডাইনামিকভাবে আনতে পারো (session / context থেকে)
+  // আপাতত hardcoded করলাম
+  const userRole: "ADMIN" | "EMPLOYEE" = "ADMIN";
+
   const handleClose = () => {
     setIsOpen(false);
   };
@@ -27,8 +31,9 @@ export default function AddProductModal() {
             >
               &times;
             </button>
-            {/* userRole prop টি এখন আর পাঠানো হচ্ছে না */}
-            <ProductForm onClose={handleClose} initialData={null} />
+
+            {/* এখন userRole সঠিকভাবে pass হচ্ছে */}
+            <ProductForm onClose={handleClose} userRole={userRole} />
           </div>
         </div>
       )}

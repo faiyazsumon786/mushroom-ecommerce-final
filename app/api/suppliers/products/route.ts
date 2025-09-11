@@ -21,9 +21,8 @@ export async function GET() {
     }
 
     const products = await prisma.product.findMany({
-      where: { supplierId: supplierProfile.id },
-      orderBy: { name: 'asc' },
-    });
+  orderBy: { name: 'asc' },
+});
 
     return NextResponse.json(products);
   } catch (error) {

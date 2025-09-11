@@ -15,10 +15,9 @@ async function getSupplierData(userId: string) {
     return [];
   }
   const products = await prisma.product.findMany({
-    where: { supplierId: supplierProfile.id },
-    include: { category: true },
-    orderBy: { name: 'asc' },
-  });
+  include: { category: true },
+  orderBy: { name: 'asc' },
+});
   return products;
 }
 

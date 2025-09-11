@@ -2,6 +2,7 @@ import { PrismaClient, SupplierPayment, SupplierProfile, User, Shipment, Shipmen
 import { format } from 'date-fns';
 import PaymentActions from '../components/PaymentActions';
 
+
 const prisma = new PrismaClient();
 
 // সম্পর্কিত সব তথ্যসহ একটি নতুন এবং সঠিক টাইপ তৈরি করা হয়েছে

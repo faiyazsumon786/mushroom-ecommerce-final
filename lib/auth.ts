@@ -12,17 +12,28 @@ export const authOptions: AuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      // Fix: explicitly type return as Promise<User | null>
+      async authorize(credentials): Promise<{ id: string; name: string; email: string; role: Role } | null> {
         if (!credentials?.email || !credentials.password) return null;
+
         const user = await prisma.user.findUnique({ where: { email: credentials.email } });
+
         if (user && bcrypt.compareSync(credentials.password, user.password)) {
-          return { id: user.id, name: user.name, email: user.email, role: user.role };
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name || '', // <-- prevent null
+            role: user.role as Role, // <-- cast to enum
+          };
         }
+
         return null;
       },
     }),
   ],
-  pages: { signIn: '/login' },
+  pages: {
+    signIn: '/login',
+  },
   callbacks: {
     jwt: async ({ token, user }) => {
       if (user) {
