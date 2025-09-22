@@ -11,18 +11,31 @@
   },
   "dependencies": {
     "@prisma/client": "^6.16.0",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-navigation-menu": "^1.2.14",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@tiptap/extension-image": "^3.4.4",
+    "@tiptap/react": "^3.4.4",
+    "@tiptap/starter-kit": "^3.4.4",
     "bcryptjs": "^3.0.2",
     "browser-image-compression": "^2.0.2",
+    "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.7.0",
+    "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
+    "framer-motion": "^12.23.13",
+    "lucide-react": "^0.544.0",
     "next": "15.5.2",
     "next-auth": "^4.24.11",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
+    "react-medium-image-zoom": "^5.4.0",
+    "tailwind-merge": "^3.3.1",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
@@ -36,6 +49,7 @@
     "eslint-config-next": "15.5.2",
     "prisma": "^6.16.0",
     "tailwindcss": "^4",
+    "tw-animate-css": "^1.3.8",
     "typescript": "^5"
   }
 }

@@ -25,6 +25,7 @@ enum ProductStatus {
   PENDING_APPROVAL
   LIVE
   REJECTED
+  ARCHIVED
 }
 
 enum OrderStatus {
@@ -45,6 +46,12 @@ enum ProductType {
   FRESH
   DRY
   POWDER
+  PROCESSED 
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
 }
 
 model User {
@@ -55,7 +62,8 @@ model User {
   role              Role              @default(CUSTOMER)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
-  
+
+  posts             Post[]
   reviews           Review[]
   orders            Order[]
   sentMessages      Message[]         @relation("sentMessages")
@@ -117,7 +125,8 @@ model Product {
   weightUnit       String?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
-  
+
+  relatedPosts     Post[]
   category         Category       @relation(fields: [categoryId], references: [id])
   categoryId       String
   subcategory      Category?      @relation("SubcategoryRelation", fields: [subcategoryId], references: [id])
@@ -277,8 +286,42 @@ model Banner {
   id        String   @id @default(cuid())
   imageUrl  String
   title     String?
-  link      String?
+  link      String?  // Banner will link to this URL
   isActive  Boolean  @default(true)
-  order     Int      @default(0)
+  order     Int      @default(0) // To control the display order
   createdAt DateTime @default(now())
 }
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id               String     @id @default(cuid())
+  title            String
+  slug             String     @unique
+  content          String
+  excerpt          String?
+  featuredImageUrl String
+  status           PostStatus @default(DRAFT)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  author           User       @relation(fields: [authorId], references: [id])
+  authorId         String
+  
+  products         Product[]  // Many-to-many relation with Product
+}
+
+
+model SiteSetting {
+  id    String @id @default(cuid())
+  key   String @unique // e.g., "logoUrl", "contactEmail"
+  value String
+} 

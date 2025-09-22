@@ -1,18 +1,17 @@
-import { PrismaClient, Prisma } from '@prisma/client';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { ProductType } from '@prisma/client';
 
-const prisma = new PrismaClient();
-
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('query') || '';
   const categoryId = searchParams.get('categoryId') || '';
+  const type = searchParams.get('type') as ProductType | null;
   const sortBy = searchParams.get('sortBy') || 'createdAt_desc';
 
   const [sortField, sortOrder] = sortBy.split('_');
-
-  // Prisma এর ProductWhereInput টাইপ ব্যবহার
-  const whereClause: Prisma.ProductWhereInput = {
+  
+  const whereClause: any = {
     status: 'LIVE',
     name: {
       contains: query,
@@ -24,22 +23,19 @@ export async function GET(request: Request) {
     whereClause.categoryId = categoryId;
   }
 
+  if (type && Object.values(ProductType).includes(type)) {
+    whereClause.type = type;
+  }
+
   try {
     const products = await prisma.product.findMany({
       where: whereClause,
-      orderBy: {
-        [sortField]: sortOrder as 'asc' | 'desc',
-      },
-      include: {
-        category: true,
-      },
+      orderBy: { [sortField]: sortOrder },
+      include: { category: true },
     });
     return NextResponse.json(products);
-  } catch (error: unknown) {
-    // error ব্যবহার করো
-    if (error instanceof Error) {
-      console.error('Search products error:', error.message);
-    }
+  } catch (error) {
+    console.error("Search API error:", error);
     return NextResponse.json({ error: 'Failed to search products' }, { status: 500 });
   }
 }

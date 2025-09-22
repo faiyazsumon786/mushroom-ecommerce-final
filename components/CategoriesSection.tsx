@@ -1,35 +1,44 @@
-// src/components/CategoriesSection.tsx
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import Link from 'next/link';
 import Image from 'next/image';
-
-const prisma = new PrismaClient();
+import { Card } from './ui/card';
 
 async function getCategories() {
-  return prisma.category.findMany();
+  return prisma.category.findMany({ 
+    where: { parentId: null },
+    take: 4
+  });
 }
 
 export default async function CategoriesSection() {
   const categories = await getCategories();
 
   return (
-    <section className="bg-gray-50 py-16">
+    <section className="py-20 bg-white">
       <div className="container mx-auto px-6">
-        <h2 className="text-3xl font-bold text-center mb-10 text-gray-800">Shop by Category</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        <div className="text-center">
+            <h2 className="font-serif text-4xl font-bold text-brand-dark">Explore Our Collections</h2>
+            <p className="mt-2 text-gray-600">Discover products by their category.</p>
+        </div>
+        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {categories.map(category => (
-            <Link key={category.id} href={`/products?category=${category.id}`} className="block group text-center">
-              <div className="relative w-full h-32 sm:h-40 rounded-full overflow-hidden mx-auto border-4 border-white shadow-lg transform group-hover:scale-105 transition-transform duration-300">
-                <Image 
-                  src={category.imageUrl || '/placeholder.jpg'} 
-                  alt={category.name}
-                  fill
-                  className="object-cover"
-                />
+            <Link key={category.id} href={`/products?category=${category.id}`} className="block group">
+              <div className="relative overflow-hidden rounded-xl shadow-lg transform hover:-translate-y-2 transition-transform duration-300">
+                <div className="relative w-full h-72">
+                  <Image 
+                    src={category.imageUrl || '/placeholder.jpg'} 
+                    alt={category.name}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 p-6">
+                  <h3 className="text-white font-serif text-2xl font-bold">
+                    {category.name}
+                  </h3>
+                </div>
               </div>
-              <h3 className="mt-4 text-lg font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">
-                {category.name}
-              </h3>
             </Link>
           ))}
         </div>

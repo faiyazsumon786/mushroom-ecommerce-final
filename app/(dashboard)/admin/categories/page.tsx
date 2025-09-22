@@ -1,45 +1,134 @@
-// src/app/(dashboard)/admin/categories/page.tsx
-import CategoryForm from '../components/CategoryForm';
-import { PrismaClient } from '@prisma/client';
+'use client';
+import { Category } from '@prisma/client';
+import { useEffect, useState, FormEvent, useRef } from 'react';
+import toast from 'react-hot-toast';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Trash2, Edit } from 'lucide-react';
 
-const prisma = new PrismaClient();
+export default function CategoriesPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
-async function getCategories() {
-  return await prisma.category.findMany({
-    orderBy: { name: 'asc' },
-  });
-}
+  const fetchCategories = async () => {
+    setIsLoading(true);
+    const res = await fetch('/api/categories', { cache: 'no-store' });
+    if (res.ok) setCategories(await res.json());
+    setIsLoading(false);
+  };
 
-export default async function CategoriesPage() {
-  const categories = await getCategories();
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const form = e.target as HTMLFormElement;
+
+    const apiEndpoint = editingCategory ? `/api/categories/${editingCategory.id}` : '/api/categories';
+    const method = editingCategory ? 'PUT' : 'POST';
+
+    const promise = fetch(apiEndpoint, { method, body: formData });
+      
+    toast.promise(promise, { 
+      loading: `${editingCategory ? 'Updating' : 'Creating'} category...`,
+      success: (res) => {
+        if (!res.ok) throw new Error('Action failed.');
+        setEditingCategory(null);
+        form.reset();
+        fetchCategories();
+        return `Category ${editingCategory ? 'updated' : 'created'}!`;
+      },
+      error: `Could not ${editingCategory ? 'update' : 'create'} category.`
+    });
+  };
+  
+  const handleDelete = async (categoryId: string) => {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    const promise = fetch(`/api/categories/${categoryId}`, { method: 'DELETE' });
+    toast.promise(promise, {
+      loading: 'Deleting...',
+      success: 'Category deleted!',
+      error: 'Could not delete.'
+    });
+    promise.then(res => res.ok && fetchCategories());
+  };
+
+  const startEdit = (category: Category) => {
+    setEditingCategory(category);
+    if(formRef.current) {
+        (formRef.current.elements.namedItem('name') as HTMLInputElement).value = category.name;
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingCategory(null);
+    formRef.current?.reset();
+  };
 
   return (
     <div className="space-y-8">
-      <h1 className="text-4xl font-extrabold text-gray-900">Category Management</h1>
-      
-      <CategoryForm />
-
-      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-        <h2 className="text-2xl font-semibold mb-5 text-gray-800">Existing Categories</h2>
-        
-        {categories.length === 0 ? (
-          <div className="text-center py-10 text-gray-500 text-lg">
-            No categories found.
-          </div>
-        ) : (
-          <ul className="space-y-3">
-            {categories.map((category) => (
-              <li key={category.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <span className="font-medium text-gray-700">{category.name}</span>
-                {/* Future Actions Here */}
+      <h1 className="text-4xl font-bold">Category Management</h1>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader><CardTitle>{editingCategory ? 'Edit Category' : 'Add New Category'}</CardTitle></CardHeader>
+            <CardContent>
+              <form ref={formRef} id="category-form" onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium mr-4">Edit</button>
-                  <button className="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
+                  <Label htmlFor="name">Category Name</Label>
+                  <Input id="name" name="name" type="text" defaultValue={editingCategory?.name || ''} required />
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                <div>
+                  {/* Image input is now visible in both create and edit modes */}
+                  <Label htmlFor="image">{editingCategory ? 'Change Image (Optional)' : 'Category Image (Optional)'}</Label>
+                  <Input id="image" name="image" type="file" />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit">{editingCategory ? 'Update Category' : 'Add Category'}</Button>
+                  {editingCategory && (
+                    <Button type="button" variant="outline" onClick={cancelEdit}>Cancel</Button>
+                  )}
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader><CardTitle>Existing Categories</CardTitle></CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader><TableRow><TableHead>Image & Name</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {categories.map(cat => (
+                    <TableRow key={cat.id}>
+                      <TableCell className="font-medium flex items-center gap-4">
+                        {cat.imageUrl ? (
+                           <Image src={cat.imageUrl} alt={cat.name} width={40} height={40} className="rounded-md object-cover" />
+                        ) : (
+                           <div className="w-10 h-10 bg-gray-100 rounded-md"></div>
+                        )}
+                        <span>{cat.name}</span>
+                      </TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Button variant="ghost" size="icon" onClick={() => startEdit(cat)}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(cat.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

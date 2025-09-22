@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-lg font-bold mb-4">🍄 Mushroom LOTA</h3>
+            <h3 className="text-lg font-bold mb-4">🍄Zamzam Mushroom</h3>
             <p className="text-gray-400">Your trusted source for fresh, organic mushrooms.</p>
           </div>
           <div>
@@ -21,7 +21,7 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Contact Us</h3>
             <p className="text-gray-400">Dhaka, Bangladesh</p>
-            <p className="text-gray-400">info@mushroomlota.com</p>
+            <p className="text-gray-400">info@zamzammushroom.com</p>
           </div>
           <div>
             <h3 className="font-semibold mb-4">Follow Us</h3>
@@ -33,7 +33,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="text-center text-gray-500 py-6 mt-8 border-t border-gray-700">
-          <p>&copy; {new Date().getFullYear()} Mushroom LOTA. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Zamzam Mushroom. All rights reserved.</p>
         </div>
       </div>
     </footer>

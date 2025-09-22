@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { Product, Category } from '@prisma/client';
 import ProductCard from '@/components/ProductCard';
@@ -10,41 +9,44 @@ export default function ProductPageClient() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedType, setSelectedType] = useState('');
   const [sortBy, setSortBy] = useState('createdAt_desc');
   const [isLoading, setIsLoading] = useState(true);
   
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    // Read category and type from the URL when the page loads or URL changes
+    const categoryFromUrl = searchParams.get('category') || '';
+    const typeFromUrl = searchParams.get('type') || '';
+    setSelectedCategory(categoryFromUrl);
+    setSelectedType(typeFromUrl);
+
     const fetchCategories = async () => {
-      const res = await fetch('/api/categories');
+      const res = await fetch('/api/categories', { cache: 'no-store' });
       const data = await res.json();
       setCategories(data);
     };
     fetchCategories();
-    
-    const categoryFromUrl = searchParams.get('category');
-    if(categoryFromUrl) {
-      setSelectedCategory(categoryFromUrl);
-    }
-
   }, [searchParams]);
 
   useEffect(() => {
+    // Fetch products whenever a filter changes
     const fetchProducts = async () => {
       setIsLoading(true);
       const params = new URLSearchParams({
         query: searchTerm,
         categoryId: selectedCategory,
+        type: selectedType,
         sortBy: sortBy,
       });
-      const res = await fetch(`/api/search-products?${params.toString()}`);
+      const res = await fetch(`/api/search-products?${params.toString()}`, { cache: 'no-store' });
       const data = await res.json();
       setProducts(data);
       setIsLoading(false);
     };
     fetchProducts();
-  }, [searchTerm, selectedCategory, sortBy]);
+  }, [searchTerm, selectedCategory, selectedType, sortBy]);
 
   return (
     <main className="container mx-auto px-6 py-12">

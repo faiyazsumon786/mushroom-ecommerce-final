@@ -1,29 +1,40 @@
-// src/components/HeroSlider.tsx
 'use client'
 import useEmblaCarousel from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
 import Image from 'next/image'
-import { Banner } from '@prisma/client' // Import the Banner type
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
-// The component now accepts banners as a prop
-export default function HeroSlider({ banners }: { banners: Banner[] }) {
-  const [emblaRef] = useEmblaCarousel({ loop: true }, [Autoplay()])
+export default function HeroSlider({ banners }: { banners: any[] }) {
+  const [emblaRef] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 5000 })])
 
-  if (banners.length === 0) {
-    return null; // Don't show slider if no banners are available
-  }
+  if (!banners || banners.length === 0) return null;
 
   return (
-    <div className="overflow-hidden" ref={emblaRef}>
+    <div className="overflow-hidden relative" ref={emblaRef}>
       <div className="flex">
         {banners.map((banner) => (
-          <div className="relative flex-shrink-0 flex-grow-0 w-full h-96" key={banner.id}>
+          <div className="relative flex-[0_0_100%] h-[80vh]" key={banner.id}>
             <Image
               src={banner.imageUrl}
               alt={banner.title || 'Homepage banner'}
               fill
-              className="object-cover"
+              className="object-cover" // This works best with wide images
+              priority
             />
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <div className="text-center text-white max-w-2xl p-4">
+                <h1 className="font-serif text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
+                  {/* {banner.title || "Fresh Organic Mushrooms"} */}
+                </h1>
+                {/* <p className="text-lg mb-8 drop-shadow-md">Delivered straight from the farm to your table.</p> */}
+                <Link href={banner.link || '/products'}>
+                  <Button size="lg" className="bg-brand-yellow text-brand-dark hover:bg-yellow-400 text-lg py-6 px-8">
+                    Shop Now
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         ))}
       </div>

@@ -28,7 +28,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <section className="flex h-screen w-full bg-gray-100 font-sans">
       <aside className="w-72 flex-shrink-0 bg-gray-800 text-white p-6 flex flex-col">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white select-none">🍄 Mushroom LOTA</h1>
+          <h1 className="text-2xl font-bold text-white select-none">🍄Zamzam Mushroom</h1>
           <p className="text-xs text-gray-400 select-none">Management Panel</p>
         </div>
         <SidebarNav userRole={user.role} />

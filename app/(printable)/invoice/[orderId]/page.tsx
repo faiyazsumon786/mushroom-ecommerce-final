@@ -40,7 +40,7 @@ export default async function InvoicePage({ params }: any) {
           <p className="text-gray-500 mt-1">Order #{order.orderNumber}</p>
         </div>
         <div className="text-right">
-          <h2 className="text-2xl font-bold text-gray-700">🍄 Mushroom LOTA</h2>
+          <h2 className="text-2xl font-bold text-gray-700">🍄Zamzam Mushroom</h2>
           <p className="text-sm text-gray-500">Dhaka, Bangladesh</p>
         </div>
       </header>
