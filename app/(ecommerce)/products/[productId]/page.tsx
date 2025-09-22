@@ -1,58 +1,56 @@
 // src/app/(ecommerce)/products/[productId]/page.tsx
-import prisma from '@/lib/prisma';
-import AddToCartButton from '@/components/AddToCartButton';
-import ReviewForm from '@/components/ReviewForm';
-import ProductImageGallery from '@/components/ProductImageGallery';
-import ProductRow from '@/components/ProductRow';
-import { Badge } from '@/components/ui/badge';
-import PostCard from '@/components/PostCard';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { formatCurrency } from '@/lib/formatCurrency';
-import { notFound } from 'next/navigation';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+import AddToCartButton from "@/components/AddToCartButton";
+import ReviewForm from "@/components/ReviewForm";
+import ProductImageGallery from "@/components/ProductImageGallery";
+import ProductRow from "@/components/ProductRow";
+import PostCard from "@/components/PostCard";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/formatCurrency";
+import { notFound } from "next/navigation";
 
-interface ProductPageParams {
-  productId: string;
-}
+export default async function ProductDetailPage({
+  params,
+}: {
+  params: any; // 🔥 make it loose for Next.js type-checker
+}) {
+  const resolvedParams =
+    typeof params === "object" && "productId" in params
+      ? params
+      : await params;
 
-interface ProductPageProps {
-  params: ProductPageParams;
-}
+  const productId = resolvedParams?.productId;
+  if (!productId) return notFound();
 
-async function getProduct(id: string) {
-  return prisma.product.findUnique({
-    where: { id },
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
     include: {
-      reviews: { include: { user: true }, orderBy: { createdAt: 'desc' } },
+      reviews: { include: { user: true }, orderBy: { createdAt: "desc" } },
       images: true,
       category: true,
       relatedPosts: true,
     },
   });
-}
 
-async function getRelatedProducts(categoryId: string, currentProductId: string) {
-  return prisma.product.findMany({
+  if (!product) return notFound();
+
+  const relatedProducts = await prisma.product.findMany({
     where: {
-      categoryId,
-      id: { not: currentProductId },
-      status: 'LIVE',
+      categoryId: product.categoryId,
+      id: { not: product.id },
+      status: "LIVE",
     },
     take: 4,
   });
-}
-
-// ✅ Server Component
-export default async function ProductDetailPage({ params }: ProductPageProps) {
-  const product = await getProduct(params.productId);
-  if (!product) return notFound();
 
   const session = await getServerSession(authOptions);
-  const relatedProducts = await getRelatedProducts(product.categoryId, product.id);
 
   const averageRating =
     product.reviews.length > 0
-      ? product.reviews.reduce((acc, review) => acc + review.rating, 0) / product.reviews.length
+      ? product.reviews.reduce((acc, r) => acc + r.rating, 0) /
+        product.reviews.length
       : 0;
 
   return (
@@ -64,8 +62,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             galleryImages={product.images}
             altText={product.name}
           />
+
           <div className="space-y-6">
-            <Badge variant="outline">{product.category.name}</Badge>
+            <Badge variant="outline">{product.category?.name ?? "Uncategorized"}</Badge>
             <h1 className="font-serif text-4xl lg:text-5xl font-bold text-brand-dark">{product.name}</h1>
 
             {averageRating > 0 && (
@@ -74,9 +73,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                   {Array(Math.round(averageRating))
                     .fill(0)
                     .map((_, i) => (
-                      <span key={i} className="text-2xl">
-                        ★
-                      </span>
+                      <span key={i} className="text-2xl">★</span>
                     ))}
                 </div>
                 <p className="ml-2 text-gray-600">({product.reviews.length} reviews)</p>
@@ -101,19 +98,30 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         </div>
       </div>
 
+      {/* Reviews */}
       <div className="container mx-auto px-4 py-12 border-t">
         <h2 className="text-3xl font-bold mb-6">Customer Reviews</h2>
         {session?.user && <ReviewForm productId={product.id} />}
-        <div className="mt-8 space-y-8">{/* Reviews list */}</div>
+        <div className="mt-8 space-y-8">
+          {product.reviews.map((review) => (
+            <div key={review.id} className="border p-4 rounded-md">
+              <p className="font-semibold">{review.user?.name ?? "Anonymous"}</p>
+              <p className="text-sm text-gray-600">{review.comment}</p>
+              <p className="text-yellow-400">{'★'.repeat(review.rating)}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
+      {/* Related Products */}
       {relatedProducts.length > 0 && (
         <div className="bg-white">
           <ProductRow title="Related Products" products={relatedProducts} />
         </div>
       )}
 
-      {product.relatedPosts.length > 0 && (
+      {/* Related Blog Posts */}
+      {product.relatedPosts?.length > 0 && (
         <div className="container mx-auto px-4 py-12 border-t">
           <h2 className="text-3xl font-bold mb-8 text-center">Related From Our Blog</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
