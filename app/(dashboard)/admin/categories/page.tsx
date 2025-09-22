@@ -23,48 +23,48 @@ export default function CategoriesPage() {
     setIsLoading(false);
   };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const form = e.target as HTMLFormElement;
 
     const apiEndpoint = editingCategory ? `/api/categories/${editingCategory.id}` : '/api/categories';
     const method = editingCategory ? 'PUT' : 'POST';
 
-    const promise = fetch(apiEndpoint, { method, body: formData });
-      
-    toast.promise(promise, { 
-      loading: `${editingCategory ? 'Updating' : 'Creating'} category...`,
-      success: (res) => {
-        if (!res.ok) throw new Error('Action failed.');
-        setEditingCategory(null);
-        form.reset();
-        fetchCategories();
-        return `Category ${editingCategory ? 'updated' : 'created'}!`;
-      },
-      error: `Could not ${editingCategory ? 'update' : 'create'} category.`
-    });
+    try {
+      const res = await fetch(apiEndpoint, { method, body: formData });
+      if (!res.ok) throw new Error('Action failed.');
+
+      toast.success(`Category ${editingCategory ? 'updated' : 'created'}!`);
+      setEditingCategory(null);
+      formRef.current?.reset();
+      fetchCategories();
+    } catch (err: any) {
+      toast.error(err.message || `Could not ${editingCategory ? 'update' : 'create'} category.`);
+    }
   };
-  
+
   const handleDelete = async (categoryId: string) => {
     if (!confirm('Are you sure you want to delete this category?')) return;
-    const promise = fetch(`/api/categories/${categoryId}`, { method: 'DELETE' });
-    toast.promise(promise, {
-      loading: 'Deleting...',
-      success: 'Category deleted!',
-      error: 'Could not delete.'
-    });
-    promise.then(res => res.ok && fetchCategories());
+
+    try {
+      const res = await fetch(`/api/categories/${categoryId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data?.error || 'Could not delete.');
+      }
+      toast.success('Category deleted!');
+      fetchCategories();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   const startEdit = (category: Category) => {
     setEditingCategory(category);
     if(formRef.current) {
-        (formRef.current.elements.namedItem('name') as HTMLInputElement).value = category.name;
+      (formRef.current.elements.namedItem('name') as HTMLInputElement).value = category.name;
     }
   };
 
@@ -87,7 +87,6 @@ export default function CategoriesPage() {
                   <Input id="name" name="name" type="text" defaultValue={editingCategory?.name || ''} required />
                 </div>
                 <div>
-                  {/* Image input is now visible in both create and edit modes */}
                   <Label htmlFor="image">{editingCategory ? 'Change Image (Optional)' : 'Category Image (Optional)'}</Label>
                   <Input id="image" name="image" type="file" />
                 </div>
@@ -101,20 +100,26 @@ export default function CategoriesPage() {
             </CardContent>
           </Card>
         </div>
+
         <div className="lg:col-span-2">
           <Card>
             <CardHeader><CardTitle>Existing Categories</CardTitle></CardHeader>
             <CardContent>
               <Table>
-                <TableHeader><TableRow><TableHead>Image & Name</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Image & Name</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {categories.map(cat => (
                     <TableRow key={cat.id}>
                       <TableCell className="font-medium flex items-center gap-4">
                         {cat.imageUrl ? (
-                           <Image src={cat.imageUrl} alt={cat.name} width={40} height={40} className="rounded-md object-cover" />
+                          <Image src={cat.imageUrl} alt={cat.name} width={40} height={40} className="rounded-md object-cover" />
                         ) : (
-                           <div className="w-10 h-10 bg-gray-100 rounded-md"></div>
+                          <div className="w-10 h-10 bg-gray-100 rounded-md"></div>
                         )}
                         <span>{cat.name}</span>
                       </TableCell>

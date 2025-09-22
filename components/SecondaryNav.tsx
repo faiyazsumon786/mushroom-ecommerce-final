@@ -9,7 +9,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +25,7 @@ export function SecondaryNav({ navData }: { navData: NavData }) {
           {navData.map((item) => (
             <NavigationMenuItem key={item.type}>
               <NavigationMenuTrigger className="text-base font-semibold">
-                <Link href={`/products?type=${item.type}`}>
+                <Link href={`/products?type=${item.type ?? ''}`}>
                   {item.type.charAt(0) + item.type.slice(1).toLowerCase()}
                 </Link>
               </NavigationMenuTrigger>
@@ -36,7 +35,7 @@ export function SecondaryNav({ navData }: { navData: NavData }) {
                     <ListItem
                       key={category.id}
                       title={category.name}
-                      href={`/products?category=${category.id}`}
+                      href={`/products?category=${category.id ?? ''}`}
                     >
                       Browse all {category.name} mushrooms.
                     </ListItem>
@@ -54,12 +53,13 @@ export function SecondaryNav({ navData }: { navData: NavData }) {
 const ListItem = React.forwardRef<
   React.ElementRef<"a">,
   React.ComponentPropsWithoutRef<"a">
->(({ className, title, children, ...props }, ref) => {
+>(({ className, title, children, href, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
         <Link
           ref={ref}
+          href={href ?? '#'}
           className={cn(
             "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
             className

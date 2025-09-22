@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import TiptapEditor from '@/components/TiptapEditor'; // <-- নতুন এডিটর ইম্পোর্ট করুন
+import TiptapEditor from '@/components/TiptapEditor';
 
 export default function PostEditorPage() {
     const router = useRouter();
@@ -57,30 +57,34 @@ export default function PostEditorPage() {
         formData.append('title', title);
         formData.append('content', content);
         formData.append('status', status);
-        if (featuredImage) {
-            formData.append('featuredImage', featuredImage);
+        if (featuredImage) formData.append('featuredImage', featuredImage);
+
+        if (isNewPost) {
+            selectedProducts.forEach(pid => formData.append('productIds', pid));
         }
-        selectedProducts.forEach(productId => formData.append('productIds', productId));
-        
+
         const apiEndpoint = isNewPost ? '/api/admin/posts' : `/api/admin/posts/${postId}`;
         const method = isNewPost ? 'POST' : 'PUT';
-        
         const body = isNewPost ? formData : JSON.stringify({ title, content, status, productIds: selectedProducts });
-        const headers = isNewPost ? {} : { 'Content-Type': 'application/json' };
+        const headers = isNewPost ? undefined : { 'Content-Type': 'application/json' };
 
-        const promise = fetch(apiEndpoint, { method, body, headers });
+        try {
+            const promise = fetch(apiEndpoint, { method, body, headers });
 
-        toast.promise(promise, {
-            loading: 'Saving post...',
-            success: (res) => {
-                if (!res.ok) throw new Error('Failed to save post.');
-                router.push('/admin/blog');
-                return 'Post saved successfully!';
-            },
-            error: 'Could not save post.'
-        });
+            toast.promise(promise, {
+                loading: 'Saving post...',
+                success: 'Post saved successfully!',
+                error: 'Could not save post.'
+            });
 
-        promise.finally(() => setIsLoading(false));
+            const res = await promise;
+            if (res.ok) router.push('/admin/blog');
+
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -112,7 +116,7 @@ export default function PostEditorPage() {
                     <Card>
                         <CardHeader><CardTitle>Post Settings</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
-                             <div>
+                            <div>
                                 <Label>Status</Label>
                                 <Select onValueChange={(value: PostStatus) => setStatus(value)} value={status}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -133,7 +137,7 @@ export default function PostEditorPage() {
                         <CardContent className="max-h-60 overflow-y-auto">
                             <div className="space-y-2">
                                 {products.map(product => (
-                                    <div key={product.id} className="flex items-center space-x-2">
+                                    <div key={product.id} className="flex items-center gap-2">
                                         <input 
                                             type="checkbox" 
                                             id={`product-${product.id}`}
