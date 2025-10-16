@@ -6,7 +6,6 @@ import toast from 'react-hot-toast';
 import CustomFileInput from './CustomFileInput';
 import imageCompression from 'browser-image-compression';
 
-// The userRole prop has been removed as it is no longer needed
 interface ProductFormProps {
   onClose: () => void;
   initialData?: Product | null;
@@ -14,7 +13,6 @@ interface ProductFormProps {
 
 const formatEnum = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase().replace('_', ' ');
 
-// The userRole prop has been removed from here
 export default function ProductForm({ onClose, initialData }: ProductFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
@@ -25,7 +23,7 @@ export default function ProductForm({ onClose, initialData }: ProductFormProps) 
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const res = await fetch('/api/categories');
+        const res = await fetch('/api/categories', { cache: 'no-store' });
         if (!res.ok) throw new Error("Failed to fetch categories");
         const data = await res.json();
         setCategories(data);

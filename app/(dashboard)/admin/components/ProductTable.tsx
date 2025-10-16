@@ -8,6 +8,8 @@ import { Product, Category, User, ProductStatus } from '@prisma/client';
 import ProductForm from './ProductForm';
 import { useSession } from 'next-auth/react';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { Button } from '@/components/ui/button';
+import { Edit, Trash2, CheckCircle } from 'lucide-react';
 
 type FullProduct = Product & {
   category: Category;
@@ -25,35 +27,35 @@ export default function ProductTable({ products }: { products: FullProduct[] }) 
   const handleApprove = async (productId: string) => {
     const promise = fetch(`/api/products/${productId}/approve`, { method: 'PATCH' });
     toast.promise(promise, {
-      loading: 'Approving...',
+      loading: 'Approving product...',
       success: (res) => {
         if (!res.ok) throw new Error('Failed to approve.');
         router.refresh();
-        return 'Product approved and is now LIVE!';
+        return 'Product is now LIVE!';
       },
       error: 'Could not approve product.'
     });
   };
 
   const handleEdit = (product: FullProduct) => {
-    setEditingProduct(product); // 'setEditingProduct' is now used here
+    setEditingProduct(product);
     setIsModalOpen(true);
   };
 
   const handleArchive = async (productId: string) => {
-    if (confirm('Are you sure you want to archive this product?')) {
-      // 'productId' is now used here
-      const promise = fetch(`/api/products/${productId}`, { method: 'DELETE' });
-      toast.promise(promise, {
-        loading: 'Archiving...',
-        success: (res) => {
-          if (!res.ok) throw new Error('Failed to archive.');
-          router.refresh();
-          return 'Product archived!';
-        },
-        error: 'Could not archive product.'
-      });
+    if (!confirm('Are you sure you want to archive this product? It will be hidden from customers.')) {
+      return;
     }
+    const promise = fetch(`/api/products/${productId}`, { method: 'DELETE' });
+    toast.promise(promise, {
+      loading: 'Archiving product...',
+      success: (res) => {
+        if (!res.ok) throw new Error('Failed to archive.');
+        router.refresh();
+        return 'Product archived!';
+      },
+      error: 'Could not archive product.'
+    });
   };
   
   const getStatusBadgeClass = (status: ProductStatus) => {
@@ -61,6 +63,7 @@ export default function ProductTable({ products }: { products: FullProduct[] }) 
       case ProductStatus.LIVE: return 'bg-green-100 text-green-800';
       case ProductStatus.PENDING_APPROVAL: return 'bg-yellow-100 text-yellow-800';
       case ProductStatus.ARCHIVED: return 'bg-gray-200 text-gray-800';
+      case ProductStatus.DRAFT: return 'bg-blue-100 text-blue-800';
       default: return 'bg-red-100 text-red-800';
     }
   };
@@ -84,7 +87,9 @@ export default function ProductTable({ products }: { products: FullProduct[] }) 
             <tbody>
               {products.map((product) => (
                 <tr key={product.id} className="border-b hover:bg-gray-50">
-                  <td className="py-2 px-4"><Image src={product.image} alt={product.name} width={50} height={50} className="rounded-lg object-cover" /></td>
+                  <td className="py-2 px-4">
+                    <Image src={product.image} alt={product.name} width={50} height={50} className="rounded-lg object-cover" />
+                  </td>
                   <td className="py-2 px-4 font-semibold">{product.name}</td>
                   <td className="py-2 px-4">{formatCurrency(product.price)}</td>
                   <td className="py-2 px-4">{product.stock}</td>
@@ -93,13 +98,19 @@ export default function ProductTable({ products }: { products: FullProduct[] }) 
                       {product.status.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="py-2 px-4 text-right space-x-2">
+                  <td className="py-2 px-4 text-right space-x-1">
                     {product.status === ProductStatus.PENDING_APPROVAL && userRole === 'ADMIN' && (
-                      <button onClick={() => handleApprove(product.id)} className="text-green-600 hover:text-green-800 text-sm font-medium">Approve</button>
+                      <Button variant="ghost" size="icon" onClick={() => handleApprove(product.id)}>
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      </Button>
                     )}
-                    <button onClick={() => handleEdit(product)} className="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
                     {product.status !== ProductStatus.ARCHIVED && (
-                      <button onClick={() => handleArchive(product.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">Archive</button>
+                      <Button variant="ghost" size="icon" onClick={() => handleArchive(product.id)}>
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
                     )}
                   </td>
                 </tr>
