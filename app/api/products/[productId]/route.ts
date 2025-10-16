@@ -1,4 +1,4 @@
-1import { ProductStatus } from '@prisma/client';
+import { ProductStatus } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
