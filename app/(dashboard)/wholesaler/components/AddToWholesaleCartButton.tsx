@@ -12,11 +12,11 @@ export default function AddToWholesaleCartButton({ product }: { product: Product
         const existingItem = items.find(item => item.id === product.id);
         
         if (!existingItem) {
-            // If the item is not in the cart, add the minimum quantity for the first time.
-            addToCart({ ...product, quantity: product.minWholesaleOrderQuantity });
+            // যদি আইটেমটি কার্টে না থাকে, তাহলে মিনিমাম পরিমাণ পাঠানো হচ্ছে
+            addToCart(product, product.minWholesaleOrderQuantity);
             toast.success(`${product.name} (x${product.minWholesaleOrderQuantity}) added to cart!`);
         } else {
-            // If it's already in the cart, just add one more.
+            // যদি আগে থেকেই থাকে, তাহলে শুধু একটি করে বাড়বে (ডিফল্ট)
             addToCart(product);
             toast.success(`+1 ${product.name} added to cart!`);
         }

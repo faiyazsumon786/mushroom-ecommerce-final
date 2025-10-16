@@ -1,66 +1,55 @@
-// src/lib/wholesaleCartStore.ts
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import { Product } from '@prisma/client';
 
-export interface CartItem extends Product {
-  quantity: number;
-}
+export type CartItem = Product & { quantity: number };
 
-interface WholesaleCartState {
+type CartStore = {
   items: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, quantityToAdd?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-}
+};
 
-export const useWholesaleCartStore = create<WholesaleCartState>()(
+export const useWholesaleCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
-
-      addToCart: (product) => {
-        const currentItems = get().items;
-        const existingItem = currentItems.find((item) => item.id === product.id);
+      // addToCart ফাংশনটিকে এখন আরও শক্তিশালী করা হয়েছে
+      addToCart: (product, quantityToAdd = 1) => {
+        const items = get().items;
+        const existingItem = items.find((item) => item.id === product.id);
 
         if (existingItem) {
-          const updatedItems = currentItems.map((item) =>
+          // যদি আইটেমটি আগে থেকেই থাকে, তাহলে শুধু quantity বাড়ানো হচ্ছে
+          const updatedItems = items.map((item) =>
             item.id === product.id
-              ? { ...item, quantity: item.quantity + 1 }
+              ? { ...item, quantity: item.quantity + quantityToAdd }
               : item
           );
           set({ items: updatedItems });
         } else {
-          set((state) => ({
-            items: [...state.items, { ...product, quantity: 1 }],
-          }));
+          // যদি আইটেমটি নতুন হয়, তাহলে এটিকে quantity সহ যোগ করা হচ্ছে
+          set({ items: [...items, { ...product, quantity: quantityToAdd }] });
         }
       },
-
       removeFromCart: (productId) => {
         set((state) => ({
           items: state.items.filter((item) => item.id !== productId),
         }));
       },
-
       updateQuantity: (productId, quantity) => {
-        if (quantity < 1) {
-          get().removeFromCart(productId);
-        } else {
-          set((state) => ({
-            items: state.items.map((item) =>
-              item.id === productId ? { ...item, quantity } : item
-            ),
-          }));
-        }
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === productId ? { ...item, quantity: quantity } : item
+          ),
+        }));
       },
-
       clearCart: () => set({ items: [] }),
     }),
     {
-      name: 'mushroom-wholesale-cart', // Use a different name for storage
-      storage: createJSONStorage(() => localStorage),
+      name: 'wholesale-cart-storage',
     }
   )
 );
