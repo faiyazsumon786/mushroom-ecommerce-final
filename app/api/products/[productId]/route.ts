@@ -19,27 +19,32 @@ async function uploadToCloudinary(buffer: Buffer): Promise<UploadApiResponse> {
   });
 }
 
-// Function to update a product (Edit)
-export async function PUT(
-    request: NextRequest,
-    { params }: { params: { productId: string } }
-) {
+// Helper function to get the ID from the URL
+const getProductId = (request: NextRequest) => {
+    const url = new URL(request.url);
+    return url.pathname.split('/').pop();
+};
+
+// প্রোডাক্ট আপডেট করার জন্য (Edit)
+export async function PUT(request: NextRequest) {
     try {
+        const productId = getProductId(request);
+        if (!productId) {
+            return NextResponse.json({ error: "Product ID is missing" }, { status: 400 });
+        }
+
         const formData = await request.formData();
         const productData: any = {};
 
-        // A list of all possible fields from the form
         const fields = [
             'name', 'shortDescription', 'description', 'price', 
             'wholesalePrice', 'minWholesaleOrderQuantity', 'stock', 
             'weight', 'weightUnit', 'type', 'categoryId', 'subcategoryId'
         ];
 
-        // Loop through the fields and add them to the data object if they exist in the form
         fields.forEach(field => {
             if (formData.has(field)) {
                 const value = formData.get(field) as string;
-                // Parse numbers for numeric fields
                 if (['price', 'wholesalePrice', 'weight'].includes(field)) {
                     productData[field] = parseFloat(value);
                 } else if (['stock', 'minWholesaleOrderQuantity'].includes(field)) {
@@ -50,7 +55,6 @@ export async function PUT(
             }
         });
         
-        // Handle optional new image upload
         const primaryImageFile = formData.get('primaryImage') as File;
         if (primaryImageFile && primaryImageFile.size > 0) {
             const primaryImageBuffer = Buffer.from(await primaryImageFile.arrayBuffer());
@@ -59,24 +63,25 @@ export async function PUT(
         }
 
         const updatedProduct = await prisma.product.update({
-            where: { id: params.productId },
+            where: { id: productId },
             data: productData,
         });
         return NextResponse.json(updatedProduct);
     } catch (error: any) {
-        console.error("Update Error:", error);
         return NextResponse.json({ error: 'Failed to update product', details: error.message }, { status: 500 });
     }
 }
 
-// Function to archive a product
-export async function DELETE(
-    request: NextRequest,
-    { params }: { params: { productId: string } }
-) {
+// প্রোডাক্ট আর্কাইভ করার জন্য (Delete)
+export async function DELETE(request: NextRequest) {
     try {
+        const productId = getProductId(request);
+        if (!productId) {
+            return NextResponse.json({ error: "Product ID is missing" }, { status: 400 });
+        }
+
         await prisma.product.update({
-            where: { id: params.productId },
+            where: { id: productId },
             data: { status: ProductStatus.ARCHIVED },
         });
         return NextResponse.json({ message: 'Product archived successfully' });
