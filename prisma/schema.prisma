@@ -118,6 +118,7 @@ model Product {
   image            String
   price            Float
   wholesalePrice   Float
+  minWholesaleOrderQuantity Int @default(1)
   stock            Int            @default(0)
   status           ProductStatus  @default(DRAFT)
   type             ProductType    @default(FRESH)

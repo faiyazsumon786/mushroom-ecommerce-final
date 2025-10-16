@@ -6,21 +6,21 @@ import toast from 'react-hot-toast';
 import CustomFileInput from './CustomFileInput';
 import imageCompression from 'browser-image-compression';
 
+// The userRole prop has been removed as it is no longer needed
 interface ProductFormProps {
   onClose: () => void;
   initialData?: Product | null;
-  userRole?: "ADMIN" | "EMPLOYEE";
 }
 
 const formatEnum = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase().replace('_', ' ');
 
-export default function ProductForm({ onClose, initialData, userRole }: ProductFormProps) {
+// The userRole prop has been removed from here
+export default function ProductForm({ onClose, initialData }: ProductFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState(initialData?.categoryId || '');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  console.log("User Role:", userRole);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -48,13 +48,7 @@ export default function ProductForm({ onClose, initialData, userRole }: ProductF
     toast.loading(initialData ? 'Updating product...' : 'Saving product...');
     
     const form = e.currentTarget;
-    const formData = new FormData();
-
-    new FormData(form).forEach((value, key) => {
-      if (!(value instanceof File)) {
-        formData.append(key, value);
-      }
-    });
+    const formData = new FormData(form);
     
     const options = { maxSizeMB: 1, maxWidthOrHeight: 1024, useWebWorker: true };
 
@@ -62,22 +56,20 @@ export default function ProductForm({ onClose, initialData, userRole }: ProductF
       const primaryImageFile = (form.elements.namedItem('primaryImage') as HTMLInputElement).files?.[0];
       if (primaryImageFile && primaryImageFile.size > 0) {
         const compressedFile = await imageCompression(primaryImageFile, options);
-        formData.append('primaryImage', compressedFile, compressedFile.name);
+        formData.set('primaryImage', compressedFile, compressedFile.name);
       } else if (!initialData) {
-        toast.error("Primary image is required.");
-        setIsLoading(false);
-        toast.dismiss();
-        return;
+        throw new Error("Primary image is required.");
       }
 
       const galleryImageFiles = Array.from((form.elements.namedItem('galleryImages') as HTMLInputElement).files || []);
+      formData.delete('galleryImages');
       for (const file of galleryImageFiles) {
         if (file.size > 0) {
           const compressedFile = await imageCompression(file, options);
           formData.append('galleryImages', compressedFile, compressedFile.name);
         }
       }
-
+      
       const apiEndpoint = initialData ? `/api/products/${initialData.id}` : '/api/products';
       const method = initialData ? 'PUT' : 'POST';
 
@@ -93,9 +85,9 @@ export default function ProductForm({ onClose, initialData, userRole }: ProductF
         const data = await response.json();
         toast.error(`Failed: ${data.details || 'Could not save product.'}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       toast.dismiss();
-      toast.error('An error occurred during image processing or upload.');
+      toast.error(error.message || 'An error occurred.');
     } finally {
       setIsLoading(false);
     }
@@ -114,9 +106,19 @@ export default function ProductForm({ onClose, initialData, userRole }: ProductF
         <CustomFileInput name="primaryImage" label="Primary Image (Thumbnail)" required={!initialData} />
         <CustomFileInput name="galleryImages" label="Gallery Images (Multiple)" multiple />
         
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <div><label className="block text-sm font-medium text-gray-800">Retail Price</label><input type="number" name="price" defaultValue={initialData?.price} step="0.01" required className="w-full mt-1 p-2 border rounded-md text-gray-900" /></div>
           <div><label className="block text-sm font-medium text-gray-800">Wholesale Price</label><input type="number" name="wholesalePrice" defaultValue={initialData?.wholesalePrice} step="0.01" required className="w-full mt-1 p-2 border rounded-md text-gray-900" /></div>
+          <div>
+            <label className="block text-sm font-medium text-gray-800">Min. Wholesale Qty</label>
+            <input 
+              type="number" 
+              name="minWholesaleOrderQuantity" 
+              defaultValue={initialData?.minWholesaleOrderQuantity || 1} 
+              required 
+              className="w-full mt-1 p-2 border rounded-md text-gray-900" 
+            />
+          </div>
           <div><label className="block text-sm font-medium text-gray-800">Stock</label><input type="number" name="stock" defaultValue={initialData?.stock} required className="w-full mt-1 p-2 border rounded-md text-gray-900" /></div>
         </div>
 

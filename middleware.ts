@@ -1,26 +1,29 @@
-import { withAuth } from "next-auth/middleware"
-import { NextResponse } from "next/server"
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
 
 export default withAuth(
-  function middleware(request) {
-    const { token } = request.nextauth
-    const { pathname } = request.nextUrl
+  function middleware(req) {
+    const userRole = req.nextauth.token?.role;
+    const { pathname } = req.nextUrl;
 
-    // Role-based redirection logic for the main dashboard URL
-    if (pathname.endsWith('/admin') || pathname.endsWith('/dashboard')) {
-      const role = token?.role?.toUpperCase()
-      if (role === 'ADMIN') {
-        return NextResponse.redirect(new URL('/admin/overview', request.url))
-      }
-      if (role === 'EMPLOYEE') {
-        return NextResponse.redirect(new URL('/employee/orders', request.url))
-      }
-      if (role === 'WHOLESALER') {
-        return NextResponse.redirect(new URL('/wholesaler/dashboard', request.url))
-      }
-      if (role === 'SUPPLIER') {
-        return NextResponse.redirect(new URL('/supplier/stock', request.url))
-      }
+    // Rule for Admin
+    if (pathname.startsWith('/admin') && userRole !== 'ADMIN') {
+      return new NextResponse("You are not authorized!");
+    }
+    
+    // Rule for Employee
+    if (pathname.startsWith('/employee') && userRole !== 'EMPLOYEE' && userRole !== 'ADMIN') {
+      return new NextResponse("You are not authorized!");
+    }
+
+    // Rule for Supplier
+    if (pathname.startsWith('/supplier') && userRole !== 'SUPPLIER') {
+      return new NextResponse("You are not authorized!");
+    }
+
+    // FIX: Added the rule for Wholesaler
+    if (pathname.startsWith('/wholesaler') && userRole !== 'WHOLESALER') {
+      return new NextResponse("You are not authorized!");
     }
   },
   {
@@ -28,14 +31,14 @@ export default withAuth(
       authorized: ({ token }) => !!token,
     },
   }
-)
+);
 
-export const config = {
-  matcher: [
-    '/admin',
-    '/admin/:path*',
-    '/employee/:path*',
-    '/wholesaler/:path*',
-    '/supplier/:path*', // <-- Add this line to protect supplier routes
-  ],
-}
+// This specifies which pages the middleware should run on
+export const config = { 
+    matcher: [
+        "/admin/:path*",
+        "/employee/:path*",
+        "/supplier/:path*",
+        "/wholesaler/:path*",
+    ] 
+};

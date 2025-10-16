@@ -1,71 +1,106 @@
-// src/app/(dashboard)/wholesaler/cart/page.tsx
 'use client';
-
 import { useWholesaleCartStore } from '@/lib/wholesaleCartStore';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { formatCurrency } from '@/lib/formatCurrency';
+import { useEffect, useState } from 'react';
 
 export default function WholesaleCartPage() {
-  const { items, removeFromCart, updateQuantity } = useWholesaleCartStore();
+    // We use a local state to prevent hydration errors with the Zustand store
+    const [cartItems, setCartItems] = useState<any[]>([]);
+    const { items, removeFromCart, updateQuantity } = useWholesaleCartStore();
 
-  // Calculate total based on wholesale price
-  const total = items.reduce((acc, item) => acc + item.wholesalePrice * item.quantity, 0);
+    useEffect(() => {
+        setCartItems(items);
+    }, [items]);
 
-  return (
-    <div className="space-y-8">
-      <h1 className="text-4xl font-extrabold text-gray-900">My Wholesale Order</h1>
+    const total = cartItems.reduce((acc, item) => acc + item.wholesalePrice * item.quantity, 0);
 
-      {items.length === 0 ? (
-        <div className="text-center py-10 bg-white p-6 rounded-xl shadow-lg border">
-          <p className="text-xl text-gray-500">Your order cart is empty.</p>
-          <Link href="/wholesaler/products" className="mt-4 inline-block bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-blue-700">
-            Browse Products
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {/* Cart Items List */}
-          <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border">
-            <ul className="divide-y divide-gray-200">
-              {items.map(item => (
-                <li key={item.id} className="flex items-center py-4">
-                  <Image src={item.image} alt={item.name} width={80} height={80} className="rounded-md mr-4 object-cover" />
-                  <div className="flex-grow">
-                    <h3 className="font-semibold text-lg">{item.name}</h3>
-                    <p className="text-gray-600">${item.wholesalePrice.toFixed(2)}</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateQuantity(item.id, parseInt(e.target.value))}
-                      className="w-16 p-2 border rounded-lg text-center text-gray-900"
-                    />
-                    <button onClick={() => removeFromCart(item.id)} className="text-red-500 hover:text-red-700 font-semibold">
-                      Remove
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+    // Check if any item in the cart violates the MOQ rule
+    const isCartValid = cartItems.every(item => item.quantity >= item.minWholesaleOrderQuantity);
 
-          {/* Order Summary */}
-          <div className="bg-white p-6 rounded-xl shadow-lg border self-start">
-            <h2 className="text-2xl font-semibold mb-4">Order Summary</h2>
-            <div className="space-y-3">
-              <div className="border-t pt-3 mt-3 flex justify-between text-xl font-bold">
-                <p>Total</p>
-                <p>${total.toFixed(2)}</p>
-              </div>
+    if (cartItems.length === 0) {
+        return (
+            <div className="text-center space-y-4">
+                <h1 className="text-4xl font-bold">Your Cart is Empty</h1>
+                <p className="text-gray-500">Looks like you haven't added any products to your wholesale cart yet.</p>
+                <Link href="/wholesaler/products">
+                    <Button>Start Shopping</Button>
+                </Link>
             </div>
-            <Link href="/wholesaler/checkout" className="mt-6 w-full block text-center bg-green-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-700">
-              Proceed to Checkout
-            </Link>
-          </div>
+        );
+    }
+
+    return (
+        <div className="space-y-8">
+            <h1 className="text-4xl font-bold">Your Wholesale Cart</h1>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                {/* Cart Items List */}
+                <div className="lg:col-span-2 space-y-4">
+                    {cartItems.map(item => (
+                        <Card key={item.id} className="flex items-center p-4">
+                            <div className="relative h-24 w-24 rounded-md overflow-hidden mr-4">
+                                <Image src={item.image} alt={item.name} fill className="object-contain" />
+                            </div>
+                            <div className="flex-grow">
+                                <h3 className="font-semibold">{item.name}</h3>
+                                <p className="text-sm text-gray-500">{formatCurrency(item.wholesalePrice)} / unit</p>
+                                <p className="text-xs text-gray-500 mt-1">Min. Order: {item.minWholesaleOrderQuantity} units</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                                <div className="flex items-center gap-2">
+                                    <Input 
+                                        type="number" 
+                                        value={item.quantity} 
+                                        onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
+                                        className="w-20 text-center"
+                                        min={item.minWholesaleOrderQuantity}
+                                    />
+                                    <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.id)}>
+                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                    </Button>
+                                </div>
+                                {item.quantity < item.minWholesaleOrderQuantity && (
+                                    <p className="text-red-500 text-xs font-semibold">
+                                        Quantity is below minimum!
+                                    </p>
+                                )}
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+
+                {/* Order Summary */}
+                <div className="lg:col-span-1 sticky top-24">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Order Summary</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex justify-between font-semibold">
+                                <span>Subtotal</span>
+                                <span>{formatCurrency(total)}</span>
+                            </div>
+                            <Button 
+                                disabled={!isCartValid || cartItems.length === 0}
+                                className="w-full text-lg py-6"
+                                asChild
+                            >
+                                <Link href="/wholesaler/checkout">Proceed to Checkout</Link>
+                            </Button>
+                            {!isCartValid && (
+                                <p className="text-center text-red-600 mt-2 text-sm font-semibold">
+                                    Please correct item quantities before proceeding.
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
         </div>
-      )}
-    </div>
-  );
+    );
 }

@@ -1,70 +1,107 @@
-// src/app/(dashboard)/wholesaler/dashboard/page.tsx
-import { PrismaClient } from '@prisma/client';
-import { getServerSession } from 'next-auth';
-import { FaShoppingCart, FaBox, FaMoneyBillWave } from 'react-icons/fa';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatCurrency } from "@/lib/formatCurrency";
+import { format } from "date-fns";
+import Link from "next/link";
+import { ShoppingBag, DollarSign, ArrowRight } from "lucide-react";
+import { redirect } from "next/navigation";
 
-const prisma = new PrismaClient();
+// This function fetches all the necessary data for the wholesaler's dashboard
+async function getWholesalerData(userId: string) {
+    const orders = await prisma.order.findMany({
+        where: { userId: userId },
+        orderBy: { createdAt: 'desc' },
+    });
 
-async function getWholesalerStats(userId: string) {
-  // FIX: aggregate instead of findMany for due payments
-  const [purchaseCount, dueOrders] = await Promise.all([
-    prisma.order.count({
-      where: { userId: userId },
-    }),
-    prisma.order.findMany({
-      where: {
-        userId: userId,
-        payment: { // This nested query now works
-          status: 'DUE',
-        },
-      },
-    }),
-  ]);
+    const totalSpent = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+    const totalOrders = orders.length;
 
-  // Use reduce to safely calculate the total from the fetched orders
-  const totalDue = dueOrders.reduce((acc, order) => acc + order.totalAmount, 0);
-
-  return { purchaseCount, totalDue };
+    return {
+        orders: orders.slice(0, 5), // Return the 5 most recent orders
+        totalSpent,
+        totalOrders,
+    };
 }
 
+export default async function WholesalerDashboard() {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+        // This should be handled by middleware, but as a safeguard:
+        redirect('/login');
+    }
 
-export default async function WholesalerDashboardPage() {
-  const session = await getServerSession();
-  if (!session?.user?.id) {
-    return <div>Please log in.</div>;
-  }
+    const data = await getWholesalerData(session.user.id);
 
-  const { purchaseCount, totalDue } = await getWholesalerStats(session.user.id);
+    return (
+        <div className="space-y-8">
+            {/* Header Section */}
+            <div className="flex justify-between items-start">
+                <div>
+                    <h1 className="text-4xl font-bold">Welcome, {session.user.name}!</h1>
+                    <p className="mt-2 text-gray-500">Here is a summary of your wholesale account.</p>
+                </div>
+                <Link href="/wholesaler/products">
+                    <Button size="lg" className="flex items-center gap-2">
+                        <span>Start New Order</span>
+                        <ArrowRight className="h-4 w-4" />
+                    </Button>
+                </Link>
+            </div>
 
-  return (
-    <div className="space-y-8">
-      <h1 className="text-4xl font-extrabold text-gray-900">My Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Placeholder for Cart Items */}
-        <div className="bg-white p-6 rounded-xl shadow-lg border flex items-center space-x-4">
-            <div className="p-3 rounded-full bg-blue-100"><FaShoppingCart className="text-2xl text-blue-500" /></div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Items in Cart</p>
-              <p className="text-2xl font-bold text-gray-800">0</p>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                        <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{data.totalOrders}</div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{formatCurrency(data.totalSpent)}</div>
+                    </CardContent>
+                </Card>
             </div>
+
+            {/* Recent Orders Table */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Recent Orders</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Order #</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Total</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {data.orders.map((order) => (
+                                <TableRow key={order.id}>
+                                    <TableCell className="font-medium">#{order.orderNumber}</TableCell>
+                                    <TableCell>{format(new Date(order.createdAt), 'dd MMM, yyyy')}</TableCell>
+                                    <TableCell>{order.status}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(order.totalAmount)}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
         </div>
-        {/* Total Purchases */}
-        <div className="bg-white p-6 rounded-xl shadow-lg border flex items-center space-x-4">
-            <div className="p-3 rounded-full bg-green-100"><FaBox className="text-2xl text-green-500" /></div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Purchases</p>
-              <p className="text-2xl font-bold text-gray-800">{purchaseCount}</p>
-            </div>
-        </div>
-        {/* Due Payments */}
-        <div className="bg-white p-6 rounded-xl shadow-lg border flex items-center space-x-4">
-            <div className="p-3 rounded-full bg-red-100"><FaMoneyBillWave className="text-2xl text-red-500" /></div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Due</p>
-              <p className="text-2xl font-bold text-gray-800">${totalDue.toFixed(2)}</p>
-            </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

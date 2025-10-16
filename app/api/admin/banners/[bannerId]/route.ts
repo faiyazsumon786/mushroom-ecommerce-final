@@ -3,21 +3,17 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// helper to await params
-async function resolveParams<T>(paramsPromise: Promise<T>) {
-  return await paramsPromise;
-}
-
+// DELETE banner
 export async function DELETE(
   request: NextRequest,
-  context: { params: Promise<{ bannerId: string }> }
+  context: { params: { bannerId: string } }
 ) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const { bannerId } = await resolveParams(context.params);
+  const { bannerId } = context.params;
 
   if (!bannerId) {
     return NextResponse.json({ error: "Banner ID is missing" }, { status: 400 });
@@ -34,25 +30,29 @@ export async function DELETE(
 // GET single banner
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ bannerId: string }> }
+  context: { params: { bannerId: string } }
 ) {
-  const { bannerId } = await resolveParams(context.params);
-  if (!bannerId) return NextResponse.json({ error: "Banner ID missing" }, { status: 400 });
+  const { bannerId } = context.params;
+  if (!bannerId)
+    return NextResponse.json({ error: "Banner ID missing" }, { status: 400 });
 
   const banner = await prisma.banner.findUnique({ where: { id: bannerId } });
-  if (!banner) return NextResponse.json({ error: "Banner not found" }, { status: 404 });
+  if (!banner)
+    return NextResponse.json({ error: "Banner not found" }, { status: 404 });
+
   return NextResponse.json(banner);
 }
 
 // PATCH / update banner
 export async function PATCH(
   request: NextRequest,
-  context: { params: Promise<{ bannerId: string }> }
+  context: { params: { bannerId: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (session?.user?.role !== "ADMIN") return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  if (session?.user?.role !== "ADMIN")
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
-  const { bannerId } = await resolveParams(context.params);
+  const { bannerId } = context.params;
   const body = await request.json();
 
   try {

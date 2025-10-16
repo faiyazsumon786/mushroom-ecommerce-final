@@ -27,7 +27,7 @@ export async function GET() {
         const products = await prisma.product.findMany({
             include: {
                 category: true,
-                createdBy: true,
+                createdBy: true, // No longer includes 'supplier'
             },
             orderBy: { createdAt: 'desc' },
         });
@@ -45,13 +45,11 @@ export async function POST(request: Request) {
     }
 
     try {
-        // --- New Verification Step ---
         // We re-check the database to ensure the session user actually exists
         const creatingUser = await prisma.user.findUnique({ where: { id: session.user.id } });
         if (!creatingUser) {
             throw new Error('Session user not found in database. Please log out and log in again.');
         }
-        // ---------------------------
 
         const formData = await request.formData();
         const primaryImageFile = formData.get('primaryImage') as File | null;
@@ -82,10 +80,11 @@ export async function POST(request: Request) {
             description: formData.get('description') as string,
             price: parseFloat(formData.get('price') as string),
             wholesalePrice: parseFloat(formData.get('wholesalePrice') as string),
+            minWholesaleOrderQuantity: parseInt(formData.get('minWholesaleOrderQuantity') as string),
             stock: parseInt(formData.get('stock') as string),
             type: formData.get('type') as ProductType,
             categoryId: formData.get('categoryId') as string,
-            createdById: creatingUser.id, // Use the verified user ID
+            createdById: creatingUser.id,
             status: productStatus,
             image: primaryImageUpload.secure_url,
             images: {

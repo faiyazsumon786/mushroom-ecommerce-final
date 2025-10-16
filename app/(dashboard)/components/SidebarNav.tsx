@@ -90,20 +90,27 @@ import {
     Settings,
     Users,
     BookOpen,
-    GalleryHorizontalEnd
+    GalleryHorizontalEnd,
+    ShoppingCart,
+    PlusCircle
 } from 'lucide-react';
 
 export default function SidebarNav({ userRole }: { userRole?: string | null }) {
   const pathname = usePathname();
 
+  // Step 1: Your clever logic to determine the correct dashboard link
+  let dashboardHref = '/';
+  if (userRole === 'ADMIN') dashboardHref = '/admin/overview';
+  if (userRole === 'EMPLOYEE') dashboardHref = '/employee/orders';
+  if (userRole === 'SUPPLIER') dashboardHref = '/supplier/my-products';
+  if (userRole === 'WHOLESALER') dashboardHref = '/wholesaler/dashboard';
+
+  // Step 2: A complete and updated list of all links with icons
   const links = [
-    // ডাইনামিক ড্যাশবোর্ড লিঙ্ক
-    { href: '/admin/overview', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN'] },
-    { href: '/employee/orders', label: 'Order Management', icon: ClipboardList, roles: ['EMPLOYEE'] },
-    { href: '/supplier/stock', label: 'My Products', icon: Box, roles: ['SUPPLIER'] },
-    { href: '/wholesaler/products', label: 'Browse Wholesale', icon: Box, roles: ['WHOLESALER'] },
+    // Dynamic Dashboard Link
+    { href: dashboardHref, label: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'EMPLOYEE', 'SUPPLIER', 'WHOLESALER'] },
     
-    // অ্যাডমিন লিঙ্ক
+    // Admin Links
     { href: '/admin/users', label: 'User Management', icon: Users, roles: ['ADMIN'] },
     { href: '/admin/products', label: 'Product Management', icon: Box, roles: ['ADMIN'] },
     { href: '/admin/categories', label: 'Category Management', icon: ClipboardList, roles: ['ADMIN'] },
@@ -113,20 +120,21 @@ export default function SidebarNav({ userRole }: { userRole?: string | null }) {
     { href: '/admin/reports', label: 'View Daily Reports', icon: FileText, roles: ['ADMIN'] },
     { href: '/admin/settings', label: 'Site Settings', icon: Settings, roles: ['ADMIN'] }, 
 
-    // এমপ্লয়ি লিঙ্ক
+    // Employee Links
+    { href: '/employee/orders', label: 'Order Management', icon: ClipboardList, roles: ['EMPLOYEE'] },
     { href: '/employee/shipments', label: 'Incoming Shipments', icon: Truck, roles: ['EMPLOYEE'] },
     { href: '/employee/payments', label: 'Supplier Payments', icon: CreditCard, roles: ['EMPLOYEE'] },
     { href: '/employee/reports', label: 'Submit Daily Report', icon: FileText, roles: ['EMPLOYEE'] },
     
-    // সাপ্লায়ার লিঙ্ক
+    // Supplier Links
     { href: '/supplier/my-products', label: 'My Product Catalog', icon: Box, roles: ['SUPPLIER'] },
     { href: '/supplier/shipments', label: 'My Shipments', icon: Truck, roles: ['SUPPLIER'] },
-    // { href: '/supplier/shipments/create', label: 'Create Shipment', icon: PlusCircle, roles: ['SUPPLIER'] },
+    { href: '/supplier/shipments/create', label: 'Create Shipment', icon: PlusCircle, roles: ['SUPPLIER'] },
     { href: '/supplier/payments', label: 'Payment History', icon: CreditCard, roles: ['SUPPLIER'] },
-
-    // হোলসেলার লিঙ্ক
-    { href: '/wholesaler/dashboard', label: 'My Dashboard', icon: LayoutDashboard, roles: ['WHOLESALER'] },
-    // { href: '/wholesaler/cart', label: 'My Cart', icon: ShoppingCart, roles: ['WHOLESALER'] },
+    
+    // Wholesaler Links
+    { href: '/wholesaler/products', label: 'Browse Wholesale', icon: Box, roles: ['WHOLESALER'] },
+    { href: '/wholesaler/cart', label: 'My Cart', icon: ShoppingCart, roles: ['WHOLESALER'] },
   ];
 
   const filteredLinks = links.filter(link => link.roles.includes(userRole || ''));
@@ -142,11 +150,11 @@ export default function SidebarNav({ userRole }: { userRole?: string | null }) {
                 href={link.href}
                 className={`flex items-center gap-3 p-3 rounded-lg text-sm transition-colors ${
                   isActive
-                    ? 'bg-gray-700 text-white'
+                    ? 'bg-gray-700 text-white font-semibold'
                     : 'text-gray-400 hover:bg-gray-700 hover:text-white'
                 }`}
               >
-                <link.icon className="h-5 w-5" />
+                <link.icon className="h-5 w-5 flex-shrink-0" />
                 <span>{link.label}</span>
               </Link>
             </li>

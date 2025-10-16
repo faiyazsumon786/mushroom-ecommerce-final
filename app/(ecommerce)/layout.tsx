@@ -23,6 +23,7 @@ export const metadata = {
   description: "Your one-stop shop for fresh mushrooms!",
 };
 
+// This function fetches the categories for each product type
 async function getNavigationData() {
     const productTypes = Object.values(ProductType);
     const navData = [];
@@ -47,23 +48,16 @@ async function getNavigationData() {
     return navData;
 }
 
-// এই ফাংশনটি ডাটাবেস থেকে লোগো URL আনবে
-async function getLogoUrl() {
-    const logoSetting = await prisma.siteSetting.findUnique({
-        where: { key: 'logoUrl' },
-    });
-    return logoSetting?.value || null;
-}
 
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
     const navData = await getNavigationData();
-    const logoUrl = await getLogoUrl(); // <-- লোগো URL আনা হচ্ছে
+    const logoUrl = await prisma.siteSetting.findUnique({ where: { key: 'logoUrl' } }).then(s => s?.value || null);
     
     return (
       <html lang="en" className={`${poppins.variable} ${lora.variable}`}> 
         <body>
           <Providers>
-            <Header logoUrl={logoUrl} /> {/* <-- Header-কে prop হিসেবে পাঠানো হচ্ছে */}
+            <Header logoUrl={logoUrl} />
             <SecondaryNav navData={navData} />
             <main className="bg-gray-50">{children}</main>
             <Footer />
