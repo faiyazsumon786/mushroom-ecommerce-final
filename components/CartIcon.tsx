@@ -1,4 +1,3 @@
-// src/components/CartIcon.tsx
 'use client';
 
 import { useCartStore } from '@/lib/cartStore';
@@ -14,13 +13,12 @@ export default function CartIcon() {
     setIsMounted(true);
   }, []);
 
-  const itemCount = items.length;
+  const itemCount = isMounted ? items.length : 0;
 
   return (
-    <Link href="/cart" className="relative p-2">
+    <Link href="/cart" className="relative p-2" id="cart-icon-element"> {/* <-- ID যোগ করা হয়েছে */}
       <FaShoppingCart className="text-2xl text-gray-800 hover:text-blue-600 transition-colors" />
-      {/* This badge will only render on the client, after the component has mounted */}
-      {isMounted && itemCount > 0 && (
+      {itemCount > 0 && (
         <span className="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
           {itemCount}
         </span>
