@@ -60,7 +60,7 @@ export default async function HomePage() {
 
       {topSelling.length > 0 && (
         <AnimatedSection>
-          <ProductCarousel title="Top Selling Products" products={topSelling} />
+          <ProductCarousel title="Top Selling Products" products={topSelling} autoplay={true}/>
         </AnimatedSection>
       )}
       

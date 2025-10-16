@@ -1,6 +1,8 @@
 'use client'
 import { Product } from '@prisma/client'
 import useEmblaCarousel from 'embla-carousel-react'
+import { type EmblaOptionsType } from 'embla-carousel'
+import Autoplay from 'embla-carousel-autoplay' // <-- নতুন: অটোপ্লে প্লাগইন ইম্পোর্ট করা হয়েছে
 import ProductCard from './ProductCard'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCallback } from 'react'
@@ -8,16 +10,22 @@ import { useCallback } from 'react'
 interface ProductCarouselProps {
   products: Product[]
   title: string
+  autoplay?: boolean // <-- নতুন: autoplay নামে একটি ঐচ্ছিক prop যোগ করা হয়েছে
 }
 
-export default function ProductCarousel({ products, title }: ProductCarouselProps) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({
+export default function ProductCarousel({ products, title, autoplay = false }: ProductCarouselProps) {
+  const options: EmblaOptionsType = {
     align: 'start',
     loop: true,
-  });
+  }
+  
+  // পরিবর্তন: প্লাগইনটি এখানে শর্তসাপেক্ষে যোগ করা হয়েছে
+  const plugins = autoplay ? [Autoplay({ delay: 4000, stopOnInteraction: false })] : []
 
-  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
+  const [emblaRef, emblaApi] = useEmblaCarousel(options, plugins)
+
+  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi])
+  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi])
 
   return (
     <section className="py-16">
@@ -44,5 +52,5 @@ export default function ProductCarousel({ products, title }: ProductCarouselProp
         </div>
       </div>
     </section>
-  );
+  )
 }
