@@ -31,14 +31,10 @@ export async function GET(request: NextRequest) {
     const products = await prisma.product.findMany({
       where: whereClause,
       orderBy: { [sortField]: sortOrder },
-      include: { 
-        category: true,
-        images: true// <-- মূল পরিবর্তন: এখন ক্যাটাগরির সম্পূর্ণ তথ্যও আসবে
-      },
+      include: { category: true, images: true },
     });
     return NextResponse.json(products);
   } catch (error) {
-    console.error("Search API error:", error);
     return NextResponse.json({ error: 'Failed to search products' }, { status: 500 });
   }
 }

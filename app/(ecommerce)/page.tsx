@@ -119,13 +119,13 @@ export default async function HomePage() {
 
       {/* Section 8: Newsletter Signup */}
       <AnimatedSection>
-        <section className="bg-dark py-24 text-white">
+        <section className="bg-dark py-24">
             <div className="container mx-auto px-6 text-center">
                 <h2 className="font-serif text-4xl font-bold">Join Our Newsletter</h2>
-                <p className="mt-4 text-gray-300 max-w-2xl mx-auto">Get the latest updates on new products, special offers, and delicious mushroom recipes.</p>
+                <p className="mt-4 text-gray-600 max-w-2xl mx-auto">Get the latest updates on new products, special offers, and delicious mushroom recipes.</p>
                 <form className="mt-8 max-w-md mx-auto flex gap-2">
-                    <Input type="email" placeholder="Enter your email address" className="bg-white/90 text-dark"/>
-                    <Button type="submit" className="bg-primary hover:bg-teal-600">Subscribe</Button>
+                    <Input type="email" placeholder="Enter your email address" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"/>
+                    <Button type="submit" className="bg-blue-600 text-white hover:bg-teal-600">Subscribe</Button>
                 </form>
             </div>
         </section>

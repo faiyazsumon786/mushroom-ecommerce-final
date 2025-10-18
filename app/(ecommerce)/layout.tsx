@@ -5,6 +5,7 @@ import { Poppins, Lora } from 'next/font/google';
 import prisma from "@/lib/prisma";
 import { ProductType } from "@prisma/client";
 import { SecondaryNav } from "@/components/SecondaryNav";
+import NextTopLoader from 'nextjs-toploader';
 import PageTransitionWrapper from "@/components/PageTransitionWrapper"; // পেজ ট্রানজিশন অ্যানিমেশন
 import FlyingCartAnimation from "@/components/FlyingCartAnimation";   // কার্ট অ্যানিমেশন
 import QuickViewModal from "@/components/QuickViewModal";         // Quick View Modal
@@ -66,6 +67,15 @@ export default async function StorefrontLayout({ children }: { children: React.R
     return (
       <html lang="en" className={`${poppins.variable} ${lora.variable}`}> 
         <body suppressHydrationWarning={true}>
+          <NextTopLoader
+            color="#0d9488" // আপনার নতুন প্রাইমারি কালার
+            initialPosition={0.08}
+            crawlSpeed={200}
+            height={3}
+            showSpinner={false}
+            easing="ease"
+            speed={200}
+          />
           <Providers>
             <Header logoUrl={logoUrl} />
             <SecondaryNav navData={navData} />
