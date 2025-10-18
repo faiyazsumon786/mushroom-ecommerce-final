@@ -19,6 +19,7 @@ export default function Header({ logoUrl }: HeaderProps) {
     { href: "/", label: "Home" },
     { href: "/products", label: "Products" },
     { href: "/blog", label: "Blog" },
+    { href: "/portfolio", label: "Portfolio" },
     { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact" },
   ];

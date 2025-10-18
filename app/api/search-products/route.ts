@@ -31,7 +31,10 @@ export async function GET(request: NextRequest) {
     const products = await prisma.product.findMany({
       where: whereClause,
       orderBy: { [sortField]: sortOrder },
-      include: { category: true },
+      include: { 
+        category: true,
+        images: true// <-- মূল পরিবর্তন: এখন ক্যাটাগরির সম্পূর্ণ তথ্যও আসবে
+      },
     });
     return NextResponse.json(products);
   } catch (error) {

@@ -325,4 +325,22 @@ model SiteSetting {
   id    String @id @default(cuid())
   key   String @unique // e.g., "logoUrl", "contactEmail"
   value String
-} 
+}
+
+model PortfolioArticle {
+  id        String   @id @default("main_portfolio") // শুধু একটি আর্টিকেল রাখব
+  title     String
+  content   String
+  updatedAt DateTime @updatedAt
+  
+  images PortfolioImage[]
+}
+
+model PortfolioImage {
+  id          String   @id @default(cuid())
+  imageUrl    String
+  caption     String?
+  
+  article     PortfolioArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  articleId   String
+}

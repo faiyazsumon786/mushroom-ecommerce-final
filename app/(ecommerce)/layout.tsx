@@ -1,12 +1,13 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Providers from "@/components/Providers";
-import FlyingCartAnimation from "@/components/FlyingCartAnimation";
 import { Poppins, Lora } from 'next/font/google';
 import prisma from "@/lib/prisma";
 import { ProductType } from "@prisma/client";
 import { SecondaryNav } from "@/components/SecondaryNav";
-import NextTopLoader from 'nextjs-toploader';
+import PageTransitionWrapper from "@/components/PageTransitionWrapper"; // পেজ ট্রানজিশন অ্যানিমেশন
+import FlyingCartAnimation from "@/components/FlyingCartAnimation";   // কার্ট অ্যানিমেশন
+import QuickViewModal from "@/components/QuickViewModal";         // Quick View Modal
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -33,10 +34,7 @@ async function getNavigationData() {
         const categories = await prisma.category.findMany({
             where: {
                 products: {
-                    some: {
-                        type: type,
-                        status: 'LIVE'
-                    }
+                    some: { type: type, status: 'LIVE' }
                 }
             },
             select: { id: true, name: true }
@@ -49,7 +47,6 @@ async function getNavigationData() {
     return navData;
 }
 
-// এই ফাংশনটি ডাটাবেস থেকে লোগো URL আনবে
 async function getLogoUrl() {
     try {
         const logoSetting = await prisma.siteSetting.findUnique({
@@ -69,23 +66,17 @@ export default async function StorefrontLayout({ children }: { children: React.R
     return (
       <html lang="en" className={`${poppins.variable} ${lora.variable}`}> 
         <body suppressHydrationWarning={true}>
-          {/* এইখানে নতুন লোডিং বারটি যোগ করা হয়েছে */}
-          <NextTopLoader
-            color="#2a9d8f" // আপনার ব্র্যান্ডের সবুজ কালার
-            initialPosition={0.08}
-            crawlSpeed={200}
-            height={3}
-            crawl={true}
-            showSpinner={false}
-            easing="ease"
-            speed={200}
-            shadow="0 0 10px #2299DD,0 0 5px #2299DD"
-          />
           <Providers>
             <Header logoUrl={logoUrl} />
             <SecondaryNav navData={navData} />
+            
             <FlyingCartAnimation />
-            <main className="bg-gray-50">{children}</main>
+            <QuickViewModal />
+
+            <PageTransitionWrapper>
+              <main className="bg-gray-50 min-h-screen">{children}</main>
+            </PageTransitionWrapper>
+            
             <Footer />
           </Providers>
         </body>

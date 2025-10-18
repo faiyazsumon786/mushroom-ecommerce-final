@@ -1,18 +1,23 @@
 'use client';
-import { Product, ProductImage } from '@prisma/client';
+import { ProductImage } from '@prisma/client';
 import Image from 'next/image';
 import { useState } from 'react';
 import Zoom from 'react-medium-image-zoom';
-import 'react-medium-image-zoom/dist/styles.css'; // Import the required styles
+import 'react-medium-image-zoom/dist/styles.css';
 
 interface ProductImageGalleryProps {
   primaryImage: string;
-  galleryImages: ProductImage[];
+  galleryImages: ProductImage[]; // <-- এটি ProductImage অবজেক্টের একটি অ্যারে আশা করে
   altText: string;
 }
 
 export default function ProductImageGallery({ primaryImage, galleryImages, altText }: ProductImageGalleryProps) {
-  const allImages = [{ id: 'primary', url: primaryImage }, ...galleryImages];
+  // গ্যালারির সব ছবি (প্রাইমারি + অন্যান্য) একটি অ্যারেতে রাখা হচ্ছে
+  const allImages = [
+    { id: 'primary', url: primaryImage }, // প্রাইমারি ছবির জন্য একটি কাস্টম অবজেক্ট
+    ...galleryImages
+  ];
+
   const [activeImage, setActiveImage] = useState(allImages[0].url);
 
   return (
@@ -35,7 +40,7 @@ export default function ProductImageGallery({ primaryImage, galleryImages, altTe
       <div className="grid grid-cols-5 gap-3">
         {allImages.map((image) => (
           <div
-            key={image.id}
+            key={image.id} // <-- এখানে প্রতিটি ছবির ইউনিক ID ব্যবহার করা হচ্ছে
             onClick={() => setActiveImage(image.url)}
             className={`relative w-full h-20 rounded-md overflow-hidden cursor-pointer border-2 transition-all bg-white flex items-center justify-center ${
               activeImage === image.url ? 'border-primary' : 'border-gray-200 hover:border-gray-300'

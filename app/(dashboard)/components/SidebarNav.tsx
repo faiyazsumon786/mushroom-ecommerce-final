@@ -90,6 +90,7 @@ import {
     Settings,
     Users,
     BookOpen,
+    GalleryHorizontal,
     GalleryHorizontalEnd,
     ShoppingCart,
     PlusCircle
@@ -116,6 +117,7 @@ export default function SidebarNav({ userRole }: { userRole?: string | null }) {
     { href: '/admin/categories', label: 'Category Management', icon: ClipboardList, roles: ['ADMIN'] },
     { href: '/admin/banners', label: 'Banner Management', icon: GalleryHorizontalEnd, roles: ['ADMIN'] },
     { href: '/admin/blog', label: 'Blog Management', icon: BookOpen, roles: ['ADMIN'] },
+    { href: '/admin/portfolio', label: 'Portfolio Management', icon: GalleryHorizontal, roles: ['ADMIN'] },
     { href: '/admin/messages', label: 'Customer Messages', icon: MessageSquare, roles: ['ADMIN'] },
     { href: '/admin/reports', label: 'View Daily Reports', icon: FileText, roles: ['ADMIN'] },
     { href: '/admin/settings', label: 'Site Settings', icon: Settings, roles: ['ADMIN'] }, 
