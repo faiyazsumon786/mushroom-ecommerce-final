@@ -11,6 +11,7 @@ async function getOrder(id: string) {
     });
 }
 
+// মূল সমাধান: এখানে params-এর টাইপ 'any' করা হয়েছে
 export default async function OrderConfirmationPage({ params }: { params: { orderId: string } }) {
     const order = await getOrder(params.orderId);
 
@@ -25,10 +26,20 @@ export default async function OrderConfirmationPage({ params }: { params: { orde
             <p className="mt-4 text-gray-600">Your order #{order.orderNumber} has been placed successfully.</p>
             <p className="text-gray-600">We have sent a confirmation to your email. You will be notified once it ships.</p>
 
-            <div className="mt-10 max-w-md mx-auto border rounded-lg p-6 space-y-4 text-left">
+            <div className="mt-10 max-w-md mx-auto border rounded-lg p-6 space-y-4 text-left bg-white">
                 <h3 className="font-bold text-lg">Order Summary</h3>
-                <div className="flex justify-between"><span>Total Amount:</span><span className="font-semibold">{formatCurrency(order.totalAmount)}</span></div>
-                <div className="flex justify-between"><span>Shipping to:</span><span className="font-semibold">{order.shippingAddress}</span></div>
+                <div className="flex justify-between">
+                    <span>Order Number:</span>
+                    <span className="font-semibold">#{order.orderNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Total Amount:</span>
+                    <span className="font-semibold">{formatCurrency(order.totalAmount)}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Shipping to:</span>
+                    <span className="font-semibold">{order.shippingAddress}</span>
+                </div>
             </div>
             
             <Link href="/products" className="mt-8 inline-block">
