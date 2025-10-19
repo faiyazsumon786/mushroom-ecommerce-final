@@ -16,7 +16,7 @@ export default function WholesaleCheckoutPage() {
         if (status === 'unauthenticated') {
             router.push('/login');
         } else if (session?.user) {
-            console.log('Logged in user:', session.user.name);
+            // console.log('Logged in user:', session.user.name);
         }
     }, [status, session, router]);
 

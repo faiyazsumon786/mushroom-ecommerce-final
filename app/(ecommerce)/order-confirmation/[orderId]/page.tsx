@@ -1,41 +1,39 @@
-// src/app/(ecommerce)/order-confirmation/[orderId]/page.tsx
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
+import { notFound } from 'next/navigation';
+import { formatCurrency } from '@/lib/formatCurrency';
+import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
-import { format } from 'date-fns'; // date-fns ইম্পোর্ট করুন
-
-const prisma = new PrismaClient();
+import { Button } from '@/components/ui/button';
 
 async function getOrder(id: string) {
-  return await prisma.order.findUnique({ where: { id } });
+    return prisma.order.findUnique({
+        where: { id },
+    });
 }
 
-// FIX: Correctly typed props
-interface OrderConfirmationPageProps {
-  params: { orderId: string };
-}
+export default async function OrderConfirmationPage({ params }: { params: { orderId: string } }) {
+    const order = await getOrder(params.orderId);
 
-export default async function OrderConfirmationPage({ params }: any) {
-  const order = await getOrder(params.orderId);
+    if (!order) {
+        notFound();
+    }
 
-  if (!order) {
-    return <div className="text-center p-12">Order not found!</div>;
-  }
+    return (
+        <div className="container mx-auto text-center py-20">
+            <CheckCircle className="h-20 w-20 mx-auto text-green-500" />
+            <h1 className="mt-6 text-4xl font-serif font-bold text-dark">Thank You For Your Order!</h1>
+            <p className="mt-4 text-gray-600">Your order #{order.orderNumber} has been placed successfully.</p>
+            <p className="text-gray-600">We have sent a confirmation to your email. You will be notified once it ships.</p>
 
-  return (
-    <div className="container mx-auto px-4 py-20 text-center">
-      <h1 className="text-4xl font-bold text-green-600 mb-4">Thank You!</h1>
-      <p className="text-xl text-gray-700">Your order has been placed successfully.</p>
-      
-      <div className="mt-6 bg-gray-50 inline-block p-6 rounded-lg border">
-        <p className="text-gray-600">Order Number: <span className="font-bold text-lg text-gray-800">#{order.orderNumber}</span></p>
-        <p className="text-gray-600">Order Date: <span className="font-semibold text-gray-800">{format(new Date(order.createdAt), 'dd MMMM, yyyy')}</span></p>
-      </div>
-
-      <div className="mt-8">
-        <Link href="/" className="inline-block bg-blue-600 text-white py-3 px-8 rounded-lg font-semibold hover:bg-blue-700">
-          Continue Shopping
-        </Link>
-      </div>
-    </div>
-  );
+            <div className="mt-10 max-w-md mx-auto border rounded-lg p-6 space-y-4 text-left">
+                <h3 className="font-bold text-lg">Order Summary</h3>
+                <div className="flex justify-between"><span>Total Amount:</span><span className="font-semibold">{formatCurrency(order.totalAmount)}</span></div>
+                <div className="flex justify-between"><span>Shipping to:</span><span className="font-semibold">{order.shippingAddress}</span></div>
+            </div>
+            
+            <Link href="/products" className="mt-8 inline-block">
+                <Button size="lg">Continue Shopping</Button>
+            </Link>
+        </div>
+    );
 }

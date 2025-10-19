@@ -1,52 +1,74 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useState, FormEvent, useEffect } from 'react';
+import { signIn, getSession, signOut } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/account';
+  console.log("Callback URL:", callbackUrl);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // useEffect(() => {
+  //   getSession().then((session) => {
+  //     if (session && session.user.role !== 'CUSTOMER') {
+  //       signOut({ redirect: false });
+  //       toast.error("This login form is for customers only. Admin/Staff should use the dedicated login page.");
+  //     }
+  //   });
+  // }, []);
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
+    try {
+      const result = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      });
+      const session = await getSession();
+      // console.log("signIn result:", result,session);
 
-    const result = await signIn('credentials', {
-      redirect: false,
-      email,
-      password,
-    });
-
-    setIsLoading(false);
-
-    if (result?.error) {
-      setError('Invalid email or password');
-    } else if (result?.ok) {
-      router.push('/admin'); // সফল লগইনের পর রিডাইরেক্ট
+      if (result?.error) {
+        toast.error("Login failed. Please check your credentials.");
+      } else if (result?.ok) {
+        // console.log("Post-login session:", session);
+        if (session && session.user.role === 'CUSTOMER') {
+          toast.success("Login successful!");
+          router.push(callbackUrl);
+        } else if(session && session.user.role === "WHOLESALER") {
+          toast.success("Login successful!");
+          router.push("/wholesaler/dashboard");
+        }else if(session && session.user.role === "SUPPLIER") {
+          toast.success("Login successful!");
+          router.push("/supplier");
+        } else{
+          toast.error("Access denied. Please use the appropriate login page for your role.");
+        }
+      }
+    } catch {
+      toast.error("An unexpected error occurred.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg border border-gray-200">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-800">Admin Panel Login</h1>
-          <p className="mt-2 text-gray-500">Welcome back! Please sign in to continue.</p>
-        </div>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-100 px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+        <h1 className="text-4xl font-extrabold text-center text-blue-700 mb-6">Customer Login</h1>
+        <p className="text-center text-gray-600 mb-8">Log in to your account to view your orders and profile.</p>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email Address
-            </label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
             <input
               id="email"
               name="email"
@@ -55,17 +77,12 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              placeholder="you@example.com"
             />
           </div>
-
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input
               id="password"
               name="password"
@@ -74,27 +91,21 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              placeholder="••••••••"
             />
           </div>
-
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
+          >
+            {isLoading ? 'Signing in...' : 'Sign In'}
+          </button>
         </form>
-
-        {/* এখানে Sign up লিঙ্ক যোগ করা হয়েছে */}
-        <p className="text-center text-sm text-gray-600">
-          Dont have an account?{' '}
-          <Link href="/signup" className="font-medium text-blue-600 hover:underline">
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Don&apos;t have an account?{' '}
+          <Link href="/signup" className="text-blue-600 font-medium hover:underline">
             Sign up
           </Link>
         </p>

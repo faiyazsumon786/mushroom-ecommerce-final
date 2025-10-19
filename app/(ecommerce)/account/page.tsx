@@ -1,77 +1,140 @@
-import { PrismaClient, OrderStatus } from '@prisma/client';
-import { getServerSession } from 'next-auth';
-import { format } from 'date-fns';
-// import Link from 'next/link';  <-- মুছে ফেলো যদি ব্যবহার না করো
+'use client'; // <-- এটিকে Client Component-এ পরিণত করা হয়েছে
 
-const prisma = new PrismaClient();
+import { useSession } from "next-auth/react";
+import { useEffect, useState, FormEvent } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatCurrency } from "@/lib/formatCurrency";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ShoppingBag, User as UserIcon } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import toast from "react-hot-toast";
 
-async function getMyOrders(userId: string) {
-  return await prisma.order.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
-  });
-}
+type ExtendedUser = {
+    name?: string;
+    email?: string;
+    image?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+};
 
-export default async function AccountPage() {
-  const session = await getServerSession();
-  if (!session?.user?.id) {
-    return <div>Please log in to view your account.</div>;
-  }
-  
-  const orders = await getMyOrders(session.user.id);
-  
-  // স্ট্যাটাস অনুযায়ী ব্যাজের রঙ নির্ধারণ
-  const getStatusBadgeClass = (status: OrderStatus) => {
-    switch (status) {
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'CONFIRMED':
-        return 'bg-blue-100 text-blue-800';
-      case 'SHIPPED':
-        return 'bg-purple-100 text-purple-800';
-      case 'DELIVERED':
-        return 'bg-green-100 text-green-800';
-      case 'CANCELLED':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+export default function AccountPage() {
+    const { data: session, status } = useSession();
+    const [orders, setOrders] = useState([]);
+    
+    // প্রোফাইল ফর্মের জন্য নতুন state
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [address, setAddress] = useState('');
+    const [city, setCity] = useState('');
+    const [postalCode, setPostalCode] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (session) {
+            // সেশন থেকে প্রোফাইল তথ্য লোড করা হচ্ছে
+            const user = session.user as ExtendedUser;
+            setName(user?.name || '');
+            setPhone(user?.phone || '');
+            setAddress(user?.address || '');
+            setCity(user?.city || '');
+            setPostalCode(user?.postalCode || '');
+
+            // ব্যবহারকারীর অর্ডারগুলো fetch করা হচ্ছে
+            const fetchOrders = async () => {
+                const res = await fetch('/api/orders/my-orders');
+                if (res.ok) setOrders(await res.json());
+            };
+            fetchOrders();
+        }
+    }, [session]);
+
+    const handleProfileUpdate = async (e: FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        
+        const promise = fetch('/api/account/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, phone, address, city, postalCode }),
+        });
+
+        toast.promise(promise, {
+            loading: 'Updating profile...',
+            success: 'Profile updated successfully!',
+            error: 'Failed to update profile.',
+        });
+
+        promise.finally(() => setIsSubmitting(false));
+    };
+
+    if (status === 'loading') {
+        return <div className="text-center py-20">Loading account details...</div>;
     }
-  };
+    
+    if (!session) {
+        return <div className="text-center py-20">Please log in to view your account.</div>
+    }
+    
+    const totalSpent = orders.reduce((sum, order: any) => sum + order.totalAmount, 0);
 
-  return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold mb-8">My Account</h1>
-      <div className="bg-white p-6 rounded-xl shadow-lg border">
-        <h2 className="text-2xl font-semibold mb-5">My Order History</h2>
-        {orders.length === 0 ? (
-          <p>You have not placed any orders yet.</p>
-        ) : (
-          <table className="min-w-full text-left">
-            <thead>
-              <tr className="border-b">
-                <th className="py-2 px-4">Order ID</th>
-                <th className="py-2 px-4">Date</th>
-                <th className="py-2 px-4">Total Amount</th>
-                <th className="py-2 px-4">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map(order => (
-                <tr key={order.id} className="border-b">
-                  <td className="py-3 px-4 font-mono text-sm">{order.id.slice(-12)}</td>
-                  <td className="py-3 px-4">{format(new Date(order.createdAt), 'dd MMM yyyy')}</td>
-                  <td className="py-3 px-4">${order.totalAmount.toFixed(2)}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusBadgeClass(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
-  );
+    return (
+        <div className="container mx-auto px-4 py-12">
+            <h1 className="font-serif text-4xl font-bold text-dark">My Account</h1>
+            <p className="mt-2 text-gray-500">Welcome back, {session.user.name}!</p>
+
+            <div className="mt-8">
+                <Tabs defaultValue="dashboard" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                        <TabsTrigger value="orders">Order History</TabsTrigger>
+                        <TabsTrigger value="profile">Edit Profile</TabsTrigger>
+                    </TabsList>
+                    
+                    {/* Dashboard Tab */}
+                    <TabsContent value="dashboard" className="mt-6">
+                        {/* ... (Dashboard-এর কোড অপরিবর্তিত থাকবে) ... */}
+                    </TabsContent>
+
+                    {/* Order History Tab */}
+                    <TabsContent value="orders" className="mt-6">
+                        {/* ... (Order History-এর কোড অপরিবর্তিত থাকবে) ... */}
+                    </TabsContent>
+
+                    {/* Profile Tab */}
+                    <TabsContent value="profile" className="mt-6">
+                         <Card>
+                            <CardHeader>
+                                <CardTitle>Edit Your Information</CardTitle>
+                                <CardDescription>Keep your personal and shipping details up to date.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleProfileUpdate} className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div><Label htmlFor="name">Full Name</Label><Input id="name" value={name} onChange={e => setName(e.target.value)} /></div>
+                                        <div><Label htmlFor="phone">Phone Number</Label><Input id="phone" value={phone} onChange={e => setPhone(e.target.value)} /></div>
+                                    </div>
+                                    <div><Label htmlFor="address">Street Address</Label><Input id="address" value={address} onChange={e => setAddress(e.target.value)} /></div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div><Label htmlFor="city">City</Label><Input id="city" value={city} onChange={e => setCity(e.target.value)} /></div>
+                                        <div><Label htmlFor="postalCode">Postal Code</Label><Input id="postalCode" value={postalCode} onChange={e => setPostalCode(e.target.value)} /></div>
+                                    </div>
+                                    <Button type="submit" disabled={isSubmitting}>
+                                        {isSubmitting ? 'Saving...' : 'Save Changes'}
+                                    </Button>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
+            </div>
+        </div>
+    );
 }

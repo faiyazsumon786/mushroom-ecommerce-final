@@ -33,7 +33,7 @@ export default function CartPage() {
                   <Image src={item.image} alt={item.name} width={80} height={80} className="rounded-md mr-4 object-cover" />
                   <div className="flex-grow">
                     <h3 className="font-semibold text-lg">{item.name}</h3>
-                    <p className="text-gray-600">${item.price.toFixed(2)}</p>
+                    <p className="text-gray-600">BDT {item.price.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <input
@@ -58,12 +58,12 @@ export default function CartPage() {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <p>Subtotal</p>
-                <p className="font-semibold">${total.toFixed(2)}</p>
+                <p className="font-semibold">BDT {total.toFixed(2)}</p>
               </div>
               {/* Add shipping, taxes here later */}
               <div className="border-t pt-3 mt-3 flex justify-between text-xl font-bold">
                 <p>Total</p>
-                <p>${total.toFixed(2)}</p>
+                <p>BDT {total.toFixed(2)}</p>
               </div>
             </div>
             <Link href="/checkout" className="mt-6 w-full block text-center bg-green-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-700">

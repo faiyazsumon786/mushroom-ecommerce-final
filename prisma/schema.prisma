@@ -12,6 +12,16 @@ enum ShipmentStatus {
   RECEIVED
 }
 
+enum DeliveryMethod {
+  INSIDE_DHAKA
+  OUTSIDE_DHAKA
+}
+
+enum PaymentMethod {
+  COD // Cash on Delivery
+  DIGITAL
+}
+
 enum Role {
   ADMIN
   EMPLOYEE
@@ -56,9 +66,15 @@ enum PostStatus {
 
 model User {
   id                String            @id @default(cuid())
-  email             String            @unique
   name              String?
+  email             String            @unique
   password          String
+
+  phone             String?
+  address           String?
+  city              String?
+  postalCode        String?
+
   role              Role              @default(CUSTOMER)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
@@ -172,9 +188,14 @@ model Order {
   totalAmount     Float
   status          OrderStatus @default(PENDING)
   createdAt       DateTime    @default(now())
+
   customerName    String
   shippingAddress String
-  customerPhone   String?
+  customerPhone   String
+  deliveryMethod    DeliveryMethod
+  deliveryCost      Float
+  paymentMethod     PaymentMethod
+  paymentStatus     PaymentStatus @default(DUE)
   
   orderItems      OrderItem[]
   payment         Payment?
