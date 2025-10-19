@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { Suspense, useState, FormEvent, useEffect } from 'react';
 import { signIn, getSession, signOut } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/account';
@@ -44,13 +44,13 @@ export default function LoginPage() {
         if (session && session.user.role === 'CUSTOMER') {
           toast.success("Login successful!");
           router.push(callbackUrl);
-        } else if(session && session.user.role === "WHOLESALER") {
+        } else if (session && session.user.role === "WHOLESALER") {
           toast.success("Login successful!");
           router.push("/wholesaler/dashboard");
-        }else if(session && session.user.role === "SUPPLIER") {
+        } else if (session && session.user.role === "SUPPLIER") {
           toast.success("Login successful!");
           router.push("/supplier");
-        } else{
+        } else {
           toast.error("Access denied. Please use the appropriate login page for your role.");
         }
       }
@@ -64,11 +64,17 @@ export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-100 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
-        <h1 className="text-4xl font-extrabold text-center text-blue-700 mb-6">Customer Login</h1>
-        <p className="text-center text-gray-600 mb-8">Log in to your account to view your orders and profile.</p>
+        <h1 className="text-4xl font-extrabold text-center text-blue-700 mb-6">
+          Customer Login
+        </h1>
+        <p className="text-center text-gray-600 mb-8">
+          Log in to your account to view your orders and profile.
+        </p>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
+            </label>
             <input
               id="email"
               name="email"
@@ -82,7 +88,9 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
             <input
               id="password"
               name="password"
@@ -111,5 +119,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

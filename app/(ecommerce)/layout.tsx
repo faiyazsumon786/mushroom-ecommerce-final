@@ -5,10 +5,10 @@ import { Poppins, Lora } from 'next/font/google';
 import prisma from "@/lib/prisma";
 import { ProductType } from "@prisma/client";
 import { SecondaryNav } from "@/components/SecondaryNav";
-import NextTopLoader from 'nextjs-toploader';
-import PageTransitionWrapper from "@/components/PageTransitionWrapper"; // পেজ ট্রানজিশন অ্যানিমেশন
-import FlyingCartAnimation from "@/components/FlyingCartAnimation";   // কার্ট অ্যানিমেশন
-import QuickViewModal from "@/components/QuickViewModal";         // Quick View Modal
+import PageTransitionWrapper from "@/components/PageTransitionWrapper";
+import FlyingCartAnimation from "@/components/FlyingCartAnimation";
+import QuickViewModal from "@/components/QuickViewModal";
+import { Suspense } from "react"; // <-- Suspense ইম্পোর্ট করা হয়েছে
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -33,14 +33,9 @@ async function getNavigationData() {
 
     for (const type of productTypes) {
         const categories = await prisma.category.findMany({
-            where: {
-                products: {
-                    some: { type: type, status: 'LIVE' }
-                }
-            },
+            where: { products: { some: { type: type, status: 'LIVE' } } },
             select: { id: true, name: true }
         });
-
         if (categories.length > 0) {
             navData.push({ type, categories });
         }
@@ -50,12 +45,11 @@ async function getNavigationData() {
 
 async function getLogoUrl() {
     try {
-        const logoSetting = await prisma.siteSetting.findUnique({
-            where: { key: 'logoUrl' },
-        });
+        const logoSetting = await prisma.siteSetting.findUnique({ where: { key: 'logoUrl' } });
         return logoSetting?.value || null;
     } catch (error) {
-        console.error("Could not fetch logo URL:", error);
+        // ডাটাবেস কানেক্ট না হলেও যেন সাইট ক্র্যাশ না করে
+        console.error("Could not fetch logo URL. Falling back to default.");
         return null;
     }
 }
@@ -67,18 +61,13 @@ export default async function StorefrontLayout({ children }: { children: React.R
     return (
       <html lang="en" className={`${poppins.variable} ${lora.variable}`}> 
         <body suppressHydrationWarning={true}>
-          <NextTopLoader
-            color="#0d9488" // আপনার নতুন প্রাইমারি কালার
-            initialPosition={0.08}
-            crawlSpeed={200}
-            height={3}
-            showSpinner={false}
-            easing="ease"
-            speed={200}
-          />
           <Providers>
             <Header logoUrl={logoUrl} />
-            <SecondaryNav navData={navData} />
+            
+            {/* মূল সমাধান: SecondaryNav-কে Suspense দিয়ে 감싸 দেওয়া হয়েছে */}
+            <Suspense fallback={<div className="h-14 bg-white border-b" />}>
+              <SecondaryNav navData={navData} />
+            </Suspense>
             
             <FlyingCartAnimation />
             <QuickViewModal />

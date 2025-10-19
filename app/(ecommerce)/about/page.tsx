@@ -1,3 +1,5 @@
+'use client'; // 👈 এটাও যুক্ত করতে হবে
+
 import Image from 'next/image';
 
 export default function AboutPage() {
