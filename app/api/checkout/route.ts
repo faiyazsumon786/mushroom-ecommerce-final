@@ -1,5 +1,5 @@
 // src/app/api/checkout/route.ts
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, DeliveryMethod, PaymentMethod } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { CartItem } from '@/lib/cartStore';
@@ -14,26 +14,25 @@ type CheckoutRequestBody = {
     shippingAddress: string, 
     customerPhone?: string 
   },
-  // frontend should send these exact keys (see frontend example below)
-  deliveryMethod: string, // e.g. "INSIDE_DHAKA" or "OUTSIDE_DHAKA" OR user-friendly text (we map both cases)
+  deliveryMethod: string, // e.g. "INSIDE_DHAKA" or "Outside Dhaka"
   deliveryCost: number,
-  paymentMethod: string // e.g. "COD" or "DIGITAL" OR user-friendly text (we map both cases)
+  paymentMethod: string // e.g. "COD" or "Digital"
 };
 
-const deliveryMethodMap: Record<string, Prisma.DeliveryMethod> = {
-  // accept both enum-like and user-friendly strings
-  INSIDE_DHAKA: 'INSIDE_DHAKA',
-  OUTSIDE_DHAKA: 'OUTSIDE_DHAKA',
-  'Inside Dhaka': 'INSIDE_DHAKA',
-  'Outside Dhaka': 'OUTSIDE_DHAKA',
+// ✅ Map user-friendly strings → Enum values
+const deliveryMethodMap: Record<string, DeliveryMethod> = {
+  INSIDE_DHAKA: DeliveryMethod.INSIDE_DHAKA,
+  OUTSIDE_DHAKA: DeliveryMethod.OUTSIDE_DHAKA,
+  'Inside Dhaka': DeliveryMethod.INSIDE_DHAKA,
+  'Outside Dhaka': DeliveryMethod.OUTSIDE_DHAKA,
 };
 
-const paymentMethodMap: Record<string, Prisma.PaymentMethod> = {
-  COD: 'COD',
-  DIGITAL: 'DIGITAL',
-  'Cash on Delivery': 'COD',
-  'Digital': 'DIGITAL',
-  'Digital Payment': 'DIGITAL',
+const paymentMethodMap: Record<string, PaymentMethod> = {
+  COD: PaymentMethod.COD,
+  DIGITAL: PaymentMethod.DIGITAL,
+  'Cash on Delivery': PaymentMethod.COD,
+  'Digital': PaymentMethod.DIGITAL,
+  'Digital Payment': PaymentMethod.DIGITAL,
 };
 
 export async function POST(request: Request) {
@@ -51,7 +50,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
     }
 
-    // Map delivery/payment method strings -> Prisma enums
     const mappedDelivery = deliveryMethodMap[deliveryMethod];
     const mappedPayment = paymentMethodMap[paymentMethod];
 
@@ -62,7 +60,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Invalid paymentMethod: ${paymentMethod}` }, { status: 400 });
     }
 
-    // stock & total calculation
+    // stock check & total calculation
     let totalItemsAmount = 0;
     const productChecks = items.map(async (item) => {
       const product = await prisma.product.findUnique({ where: { id: item.id } });
@@ -72,26 +70,23 @@ export async function POST(request: Request) {
     });
     await Promise.all(productChecks);
 
-    // final amount includes deliveryCost passed from frontend (you may also recalc server-side)
     const totalAmount = totalItemsAmount + (deliveryCost ?? 0);
 
     const newOrder = await prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
-          userId: session.user!.id,
-          totalAmount: totalAmount,
+          userId: session.user.id,
+          totalAmount,
           status: 'PENDING',
-          customerName: customerInfo.customerName ?? '',
-          shippingAddress: customerInfo.shippingAddress ?? '',
+          customerName: customerInfo.customerName,
+          shippingAddress: customerInfo.shippingAddress,
           customerPhone: customerInfo.customerPhone ?? '',
           deliveryMethod: mappedDelivery,
-          deliveryCost: deliveryCost ?? 0,
+          deliveryCost,
           paymentMethod: mappedPayment,
-          // paymentStatus will use default (DUE) as per schema
         },
       });
 
-      // create order items
       await tx.orderItem.createMany({
         data: items.map(item => ({
           orderId: order.id,
@@ -101,7 +96,6 @@ export async function POST(request: Request) {
         })),
       });
 
-      // decrement stock
       for (const item of items) {
         await tx.product.update({
           where: { id: item.id },
