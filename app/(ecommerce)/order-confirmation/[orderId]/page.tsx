@@ -5,14 +5,21 @@ import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
+// Define a specific type for the page's props
+type OrderConfirmationPageProps = {
+    params: {
+        orderId: string;
+    };
+};
+
 async function getOrder(id: string) {
     return prisma.order.findUnique({
         where: { id },
     });
 }
 
-// মূল সমাধান: এখানে params-এর টাইপ 'any' করা হয়েছে
-export default async function OrderConfirmationPage({ params }: { params: { orderId: string } }) {
+// Use the newly defined type for the component's props
+export default async function OrderConfirmationPage({ params }: OrderConfirmationPageProps) {
     const order = await getOrder(params.orderId);
 
     if (!order) {
