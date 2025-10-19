@@ -7,7 +7,6 @@ export async function PATCH(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
-
     if (!id) {
       return NextResponse.json({ error: 'Order ID is missing from URL' }, { status: 400 });
     }
