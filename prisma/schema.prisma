@@ -1,0 +1,367 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ShipmentStatus {
+  SHIPPED
+  RECEIVED
+}
+
+enum DeliveryMethod {
+  INSIDE_DHAKA
+  OUTSIDE_DHAKA
+}
+
+enum PaymentMethod {
+  COD // Cash on Delivery
+  DIGITAL
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+  SUPPLIER
+  WHOLESALER
+  CUSTOMER
+}
+
+enum ProductStatus {
+  DRAFT
+  PENDING_APPROVAL
+  LIVE
+  REJECTED
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PAID
+  DUE
+  FAILED
+}
+
+enum ProductType {
+  FRESH
+  DRY
+  POWDER
+  PROCESSED 
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model User {
+  id                String            @id @default(cuid())
+  name              String?
+  email             String            @unique
+  password          String
+
+  phone             String?
+  address           String?
+  city              String?
+  postalCode        String?
+
+  role              Role              @default(CUSTOMER)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  posts             Post[]
+  reviews           Review[]
+  orders            Order[]
+  sentMessages      Message[]         @relation("sentMessages")
+  receivedMessages  Message[]         @relation("receivedMessages")
+  dailyReports      DailyReport[]
+  createdProducts   Product[]
+  supplierInfo      SupplierProfile?
+  wholesalerInfo    WholesalerProfile?
+  stockReceipts     StockEntry[]
+  processedPayments SupplierPayment[]
+}
+
+model SupplierProfile {
+  id               String            @id @default(cuid())
+  user             User              @relation(fields: [userId], references: [id])
+  userId           String            @unique
+  companyName      String
+  address          String
+  phone            String
+  
+  shipments        Shipment[]
+  payments         SupplierPayment[]
+  supplierProducts SupplierProduct[]
+}
+
+model WholesalerProfile {
+  id            String @id @default(cuid())
+  user          User   @relation(fields: [userId], references: [id])
+  userId        String @unique
+  companyName   String
+  minOrderLimit Int    @default(50)
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  imageUrl  String?
+  
+  products  Product[]
+  subProducts   Product[] @relation("SubcategoryRelation")
+
+  parentId      String?
+  parent        Category?  @relation("Subcategories", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subcategories Category[] @relation("Subcategories")
+}
+
+model Product {
+  id               String         @id @default(cuid())
+  name             String
+  shortDescription String?
+  description      String
+  image            String
+  price            Float
+  wholesalePrice   Float
+  minWholesaleOrderQuantity Int @default(1)
+  stock            Int            @default(0)
+  status           ProductStatus  @default(DRAFT)
+  type             ProductType    @default(FRESH)
+  weight           Float?
+  weightUnit       String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  relatedPosts     Post[]
+  category         Category       @relation(fields: [categoryId], references: [id])
+  categoryId       String
+  subcategory      Category?      @relation("SubcategoryRelation", fields: [subcategoryId], references: [id])
+  subcategoryId    String?
+  
+  createdBy        User           @relation(fields: [createdById], references: [id])
+  createdById      String
+  
+  orderItems       OrderItem[]
+  reviews          Review[]
+  images           ProductImage[]
+  sourceSupplierProduct SupplierProduct?
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  url       String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+
+  @@unique([productId, userId])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     Int         @unique @default(autoincrement())
+  user            User        @relation(fields: [userId], references: [id])
+  userId          String
+  totalAmount     Float
+  status          OrderStatus @default(PENDING)
+  createdAt       DateTime    @default(now())
+
+  customerName    String
+  shippingAddress String
+  customerPhone   String
+  deliveryMethod    DeliveryMethod
+  deliveryCost      Float
+  paymentMethod     PaymentMethod
+  paymentStatus     PaymentStatus @default(DUE)
+  
+  orderItems      OrderItem[]
+  payment         Payment?
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  price     Float
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  order     Order         @relation(fields: [orderId], references: [id])
+  orderId   String        @unique
+  amount    Float
+  status    PaymentStatus @default(DUE)
+  method    String?
+  createdAt DateTime      @default(now())
+}
+
+model DailyReport {
+  id         String   @id @default(cuid())
+  employee   User     @relation(fields: [employeeId], references: [id])
+  employeeId String
+  reportText String
+  createdAt  DateTime @default(now())
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String
+  createdAt  DateTime @default(now())
+  sender     User     @relation("sentMessages", fields: [senderId], references: [id])
+  senderId   String
+  receiver   User     @relation("receivedMessages", fields: [receiverId], references: [id])
+  receiverId String
+}
+
+model StockEntry {
+  id           String   @id @default(cuid())
+  shipment     Shipment @relation(fields: [shipmentId], references: [id])
+  shipmentId   String   @unique
+  receivedBy   User     @relation(fields: [receivedById], references: [id])
+  receivedById String
+  createdAt    DateTime @default(now())
+}
+
+model SupplierPayment {
+  id            String    @id @default(cuid())
+  supplier      SupplierProfile @relation(fields: [supplierId], references: [id])
+  supplierId    String
+  amount        Float
+  status        PaymentStatus @default(DUE)
+  shipment      Shipment      @relation(fields: [shipmentId], references: [id])
+  shipmentId    String        @unique
+  processedBy   User?         @relation(fields: [processedById], references: [id])
+  processedById String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Shipment {
+  id           String         @id @default(cuid())
+  supplier     SupplierProfile @relation(fields: [supplierId], references: [id])
+  supplierId   String
+  totalValue   Float
+  status       ShipmentStatus @default(SHIPPED)
+  createdAt    DateTime       @default(now())
+  receivedAt   DateTime?
+  
+  items        ShipmentItem[]
+  stockEntry   StockEntry?
+  payment      SupplierPayment?
+}
+
+model ShipmentItem {
+  id                String          @id @default(cuid())
+  shipment          Shipment        @relation(fields: [shipmentId], references: [id])
+  shipmentId        String
+  supplierProduct   SupplierProduct @relation(fields: [supplierProductId], references: [id])
+  supplierProductId String
+  quantity          Int
+  unit              String
+  wholesalePrice    Float
+}
+
+model SupplierProduct {
+  id             String @id @default(cuid())
+  name           String
+  description    String
+  wholesalePrice Float
+  unit           String
+  supplier       SupplierProfile @relation(fields: [supplierId], references: [id])
+  supplierId     String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  mainProduct    Product? @relation(fields: [mainProductId], references: [id])
+  mainProductId  String?  @unique
+
+  shipmentItems  ShipmentItem[]
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  title     String?
+  link      String?  // Banner will link to this URL
+  isActive  Boolean  @default(true)
+  order     Int      @default(0) // To control the display order
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id               String     @id @default(cuid())
+  title            String
+  slug             String     @unique
+  content          String
+  excerpt          String?
+  featuredImageUrl String
+  status           PostStatus @default(DRAFT)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  author           User       @relation(fields: [authorId], references: [id])
+  authorId         String
+  
+  products         Product[]  // Many-to-many relation with Product
+}
+
+
+model SiteSetting {
+  id    String @id @default(cuid())
+  key   String @unique // e.g., "logoUrl", "contactEmail"
+  value String
+}
+
+model PortfolioArticle {
+  id        String   @id @default("main_portfolio") // শুধু একটি আর্টিকেল রাখব
+  title     String
+  content   String
+  updatedAt DateTime @updatedAt
+  
+  images PortfolioImage[]
+}
+
+model PortfolioImage {
+  id          String   @id @default(cuid())
+  imageUrl    String
+  caption     String?
+  
+  article     PortfolioArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  articleId   String
+}
