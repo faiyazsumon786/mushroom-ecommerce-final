@@ -18,7 +18,7 @@ enum DeliveryMethod {
 }
 
 enum PaymentMethod {
-  COD // Cash on Delivery
+  COD
   DIGITAL
 }
 
@@ -181,24 +181,24 @@ model Review {
 }
 
 model Order {
-  id              String      @id @default(cuid())
-  orderNumber     Int         @unique @default(autoincrement())
-  user            User        @relation(fields: [userId], references: [id])
-  userId          String
-  totalAmount     Float
-  status          OrderStatus @default(PENDING)
-  createdAt       DateTime    @default(now())
-
-  customerName    String
-  shippingAddress String
-  customerPhone   String
-  deliveryMethod    DeliveryMethod
-  deliveryCost      Float
-  paymentMethod     PaymentMethod
-  paymentStatus     PaymentStatus @default(DUE)
+  id                String   @id @default(cuid())
+  orderNumber       Int      @unique @default(autoincrement())
+  user              User     @relation(fields: [userId], references: [id])
+  userId            String
+  totalAmount       Float    @default(0)
+  status            OrderStatus @default(PENDING)
+  createdAt         DateTime @default(now())
   
-  orderItems      OrderItem[]
-  payment         Payment?
+  customerName      String
+  shippingAddress   String
+  customerPhone     String
+  deliveryMethod    DeliveryMethod @default(INSIDE_DHAKA)
+  deliveryCost      Float          @default(0)
+  paymentMethod     PaymentMethod  @default(COD)
+  paymentStatus     PaymentStatus  @default(DUE)
+  
+  orderItems        OrderItem[]
+  payment           Payment?
 }
 
 model OrderItem {
