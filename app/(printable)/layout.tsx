@@ -1,4 +1,5 @@
 // src/app/(printable)/layout.tsx
+import React from 'react';
 import '../globals.css';
 import { Poppins } from 'next/font/google'; // সুন্দর ফন্টের জন্য
 

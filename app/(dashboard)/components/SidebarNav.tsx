@@ -114,18 +114,18 @@ export default function SidebarNav({ userRole }: { userRole?: string | null }) {
     // Admin Links
     { href: '/admin/users', label: 'User Management', icon: Users, roles: ['ADMIN'] },
     { href: '/admin/products', label: 'Product Management', icon: Box, roles: ['ADMIN'] },
-    { href: '/admin/categories', label: 'Category Management', icon: ClipboardList, roles: ['ADMIN'] },
-    { href: '/admin/banners', label: 'Banner Management', icon: GalleryHorizontalEnd, roles: ['ADMIN'] },
-    { href: '/admin/blog', label: 'Blog Management', icon: BookOpen, roles: ['ADMIN'] },
+    { href: '/employee/orders', label: 'Order Management', icon: ClipboardList, roles: ['ADMIN','EMPLOYEE'] },
+    { href: '/admin/categories', label: 'Category Management', icon: ClipboardList, roles: ['ADMIN','EMPLOYEE'] },
+    { href: '/admin/banners', label: 'Banner Management', icon: GalleryHorizontalEnd, roles: ['ADMIN','EMPLOYEE'] },
+    { href: '/admin/blog', label: 'Blog Management', icon: BookOpen, roles: ['ADMIN','EMPLOYEE'] },
     { href: '/admin/portfolio', label: 'Portfolio Management', icon: GalleryHorizontal, roles: ['ADMIN'] },
-    { href: '/admin/messages', label: 'Customer Messages', icon: MessageSquare, roles: ['ADMIN'] },
+    { href: '/admin/messages', label: 'Customer Messages', icon: MessageSquare, roles: ['ADMIN','EMPLOYEE'] },
     { href: '/admin/reports', label: 'View Daily Reports', icon: FileText, roles: ['ADMIN'] },
     { href: '/admin/settings', label: 'Site Settings', icon: Settings, roles: ['ADMIN'] }, 
 
     // Employee Links
-    { href: '/employee/orders', label: 'Order Management', icon: ClipboardList, roles: ['EMPLOYEE'] },
-    { href: '/employee/shipments', label: 'Incoming Shipments', icon: Truck, roles: ['EMPLOYEE'] },
-    { href: '/employee/payments', label: 'Supplier Payments', icon: CreditCard, roles: ['EMPLOYEE'] },
+    { href: '/employee/shipments', label: 'Incoming Shipments', icon: Truck, roles: ['Admin','EMPLOYEE'] },
+    { href: '/employee/payments', label: 'Supplier Payments', icon: CreditCard, roles: ['Admin','EMPLOYEE'] },
     { href: '/employee/reports', label: 'Submit Daily Report', icon: FileText, roles: ['EMPLOYEE'] },
     
     // Supplier Links

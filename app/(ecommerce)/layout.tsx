@@ -5,10 +5,10 @@ import { Poppins, Lora } from 'next/font/google';
 import prisma from "@/lib/prisma";
 import { ProductType } from "@prisma/client";
 import { SecondaryNav } from "@/components/SecondaryNav";
-import PageTransitionWrapper from "@/components/PageTransitionWrapper";
+import NextTopLoader from 'nextjs-toploader'; // <-- টপ-লোডার ইম্পোর্ট করা হয়েছে
 import FlyingCartAnimation from "@/components/FlyingCartAnimation";
 import QuickViewModal from "@/components/QuickViewModal";
-import { Suspense } from "react"; // <-- Suspense ইম্পোর্ট করা হয়েছে
+import { Suspense } from "react";
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -48,8 +48,6 @@ async function getLogoUrl() {
         const logoSetting = await prisma.siteSetting.findUnique({ where: { key: 'logoUrl' } });
         return logoSetting?.value || null;
     } catch (error) {
-        // ডাটাবেস কানেক্ট না হলেও যেন সাইট ক্র্যাশ না করে
-        console.error("Could not fetch logo URL. Falling back to default.");
         return null;
     }
 }
@@ -61,10 +59,17 @@ export default async function StorefrontLayout({ children }: { children: React.R
     return (
       <html lang="en" className={`${poppins.variable} ${lora.variable}`}> 
         <body suppressHydrationWarning={true}>
+          {/* ✅ টপ-লোডিং বারটি এখানে সঠিকভাবে যোগ করা হয়েছে */}
+          <NextTopLoader
+            color="#0d9488"
+            height={3}
+            showSpinner={false}
+            easing="ease"
+            speed={200}
+          />
           <Providers>
             <Header logoUrl={logoUrl} />
             
-            {/* মূল সমাধান: SecondaryNav-কে Suspense দিয়ে 감싸 দেওয়া হয়েছে */}
             <Suspense fallback={<div className="h-14 bg-white border-b" />}>
               <SecondaryNav navData={navData} />
             </Suspense>
@@ -72,9 +77,8 @@ export default async function StorefrontLayout({ children }: { children: React.R
             <FlyingCartAnimation />
             <QuickViewModal />
 
-            <PageTransitionWrapper>
-              <main className="bg-gray-50 min-h-screen">{children}</main>
-            </PageTransitionWrapper>
+            {/* ❌ PageTransitionWrapper এখান থেকে সরিয়ে ফেলা হয়েছে */}
+            <main className="bg-gray-50 min-h-screen">{children}</main>
             
             <Footer />
           </Providers>
