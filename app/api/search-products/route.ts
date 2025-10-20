@@ -1,28 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { ProductType } from '@prisma/client';
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { ProductType } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get('query') || '';
-  const categoryId = searchParams.get('categoryId') || '';
-  const type = searchParams.get('type') as ProductType | null;
-  const sortBy = searchParams.get('sortBy') || 'createdAt_desc';
+  const query = searchParams.get("query") || "";
+  const categoryId = searchParams.get("categoryId") || "";
+  const type = searchParams.get("type") as ProductType | null;
+  const sortBy = searchParams.get("sortBy") || "createdAt_desc";
+  const [sortField, sortOrder] = sortBy.split("_");
 
-  const [sortField, sortOrder] = sortBy.split('_');
-  
   const whereClause: any = {
-    status: 'LIVE',
-    name: {
-      contains: query,
-      mode: 'insensitive',
-    },
+    status: "LIVE",
   };
+
+  if (query) {
+    whereClause.name = {
+      contains: query,
+      mode: "insensitive",
+    };
+  }
 
   if (categoryId) {
     whereClause.categoryId = categoryId;
   }
-
   if (type && Object.values(ProductType).includes(type)) {
     whereClause.type = type;
   }
@@ -35,6 +36,9 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.json(products);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to search products' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to search products" },
+      { status: 500 }
+    );
   }
 }

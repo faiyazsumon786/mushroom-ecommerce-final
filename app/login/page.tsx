@@ -10,7 +10,6 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/account';
-  console.log("Callback URL:", callbackUrl);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

@@ -124,8 +124,8 @@ export default function SidebarNav({ userRole }: { userRole?: string | null }) {
     { href: '/admin/settings', label: 'Site Settings', icon: Settings, roles: ['ADMIN'] }, 
 
     // Employee Links
-    { href: '/employee/shipments', label: 'Incoming Shipments', icon: Truck, roles: ['Admin','EMPLOYEE'] },
-    { href: '/employee/payments', label: 'Supplier Payments', icon: CreditCard, roles: ['Admin','EMPLOYEE'] },
+    { href: '/employee/shipments', label: 'Incoming Shipments', icon: Truck, roles: ['ADMIN','EMPLOYEE'] },
+    { href: '/employee/payments', label: 'Supplier Payments', icon: CreditCard, roles: ['ADMIN','EMPLOYEE'] },
     { href: '/employee/reports', label: 'Submit Daily Report', icon: FileText, roles: ['EMPLOYEE'] },
     
     // Supplier Links
