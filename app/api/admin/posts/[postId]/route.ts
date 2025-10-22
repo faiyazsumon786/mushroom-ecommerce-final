@@ -249,7 +249,6 @@
 
 
 
-
 // app/api/admin/posts/[postId]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
@@ -258,14 +257,12 @@ import { authOptions } from "@/lib/auth";
 import { v2 as cloudinary } from "cloudinary";
 import { PostStatus } from "@prisma/client";
 
-// Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
   api_key: process.env.CLOUDINARY_API_KEY!,
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-// Helper: Upload image to Cloudinary
 import type { UploadApiResponse } from "cloudinary";
 
 async function uploadImageToCloudinary(buffer: Buffer): Promise<UploadApiResponse> {
@@ -279,10 +276,18 @@ async function uploadImageToCloudinary(buffer: Buffer): Promise<UploadApiRespons
   });
 }
 
+// Utility: extract postId from URL
+function getPostId(req: NextRequest) {
+  const url = new URL(req.url);
+  const segments = url.pathname.split("/");
+  return segments[segments.length - 1]; // last segment is postId
+}
+
 // GET post
-export async function GET(req: NextRequest, { params }: { params: { postId: string } }) {
+export async function GET(req: NextRequest) {
   try {
-    const { postId } = params;
+    const postId = getPostId(req);
+
     const post = await prisma.post.findUnique({
       where: { id: postId },
       include: { products: true, author: true },
@@ -297,18 +302,17 @@ export async function GET(req: NextRequest, { params }: { params: { postId: stri
 }
 
 // PUT post
-export async function PUT(req: NextRequest, { params }: { params: { postId: string } }) {
+export async function PUT(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const userRole = session?.user?.role;
-
     if (!session || (userRole !== "ADMIN" && userRole !== "EMPLOYEE")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const { postId } = params;
-    const formData = await req.formData();
+    const postId = getPostId(req);
 
+    const formData = await req.formData();
     const title = (formData.get("title") as string) || "";
     const content = (formData.get("content") as string) || "";
     const statusRaw = (formData.get("status") as string) || "DRAFT";
@@ -318,8 +322,7 @@ export async function PUT(req: NextRequest, { params }: { params: { postId: stri
     let featuredImageUrl: string | undefined;
     const file = formData.get("featuredImage") as File | null;
     if (file) {
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+      const buffer = Buffer.from(await file.arrayBuffer());
       const uploadResult = await uploadImageToCloudinary(buffer);
       featuredImageUrl = uploadResult.secure_url;
     }
@@ -329,7 +332,7 @@ export async function PUT(req: NextRequest, { params }: { params: { postId: stri
       data: {
         title,
         content,
-        status, // ✅ Enum-safe
+        status,
         products: { set: productIds.map((id) => ({ id })) },
         ...(featuredImageUrl ? { featuredImageUrl } : {}),
       },
@@ -344,18 +347,17 @@ export async function PUT(req: NextRequest, { params }: { params: { postId: stri
 }
 
 // DELETE post
-export async function DELETE(req: NextRequest, { params }: { params: { postId: string } }) {
+export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const userRole = session?.user?.role;
-
     if (!session || (userRole !== "ADMIN" && userRole !== "EMPLOYEE")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const { postId } = params;
-    await prisma.post.delete({ where: { id: postId } });
+    const postId = getPostId(req);
 
+    await prisma.post.delete({ where: { id: postId } });
     return NextResponse.json({ message: "Post deleted successfully" });
   } catch (error) {
     console.error("DELETE post error:", error);
