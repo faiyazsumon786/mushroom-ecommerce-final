@@ -156,17 +156,23 @@ import type { UploadApiResponse } from "cloudinary";
 
 async function uploadImageToCloudinary(buffer: Buffer): Promise<UploadApiResponse> {
   return new Promise((resolve, reject) => {
-    cloudinary.uploader.upload_stream({ folder: "blog_images", resource_type: "image" }, (err, result) => {
-      if (err || !result) reject(err);
-      else resolve(result as UploadApiResponse);
-    }).end(buffer);
+    cloudinary.uploader.upload_stream(
+      { folder: "blog_images", resource_type: "image" },
+      (err, result) => {
+        if (err || !result) reject(err);
+        else resolve(result as UploadApiResponse);
+      }
+    ).end(buffer);
   });
 }
 
 // GET post
-export async function GET(req: NextRequest, context: { params: { postId: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Record<string, string> }
+) {
   try {
-    const { postId } = await context.params;
+    const postId = params.postId;
     const post = await prisma.post.findUnique({
       where: { id: postId },
       include: { products: true, author: true },
@@ -180,7 +186,10 @@ export async function GET(req: NextRequest, context: { params: { postId: string 
 }
 
 // PUT post
-export async function PUT(req: NextRequest, context: { params: { postId: string } }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Record<string, string> }
+) {
   try {
     const session = await getServerSession(authOptions);
     const userRole = session?.user?.role;
@@ -188,8 +197,7 @@ export async function PUT(req: NextRequest, context: { params: { postId: string 
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const { postId } = await context.params;
-
+    const postId = params.postId;
     const formData = await req.formData();
     const title = formData.get("title") as string;
     const content = formData.get("content") as string;
@@ -225,7 +233,10 @@ export async function PUT(req: NextRequest, context: { params: { postId: string 
 }
 
 // DELETE post
-export async function DELETE(req: NextRequest, context: { params: { postId: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Record<string, string> }
+) {
   try {
     const session = await getServerSession(authOptions);
     const userRole = session?.user?.role;
@@ -233,8 +244,7 @@ export async function DELETE(req: NextRequest, context: { params: { postId: stri
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const { postId } = await context.params;
-
+    const postId = params.postId;
     await prisma.post.delete({ where: { id: postId } });
     return NextResponse.json({ message: "Post deleted successfully" });
   } catch (error) {
